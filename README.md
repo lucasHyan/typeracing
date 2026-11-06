@@ -22,6 +22,7 @@ Criar uma experiência de jogo de digitação em navegador, com sala compartilha
 ## Documentação
 
 Os documentos do projeto acadêmico ficam em `docs/` e incluem:
+
 - ficha inicial
 - registro de horas
 - resposta/relatório do orientador
