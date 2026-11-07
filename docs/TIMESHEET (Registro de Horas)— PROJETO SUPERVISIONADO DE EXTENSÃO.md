@@ -10,7 +10,7 @@
 | Planejamento/design | 05/11/2026 | 05/11/2026 | 1,8 | Configuracao do repositorio GitHub (licenca MIT, .gitignore Node), estruturacao do quadro Kanban no Trello e preparacao do ambiente local com Vite/React | N | https://github.com/lucasHyan/typeracing | Lucas Hyan | Sessão das 13:00 às 14:50. Setup inicial de ferramentas e ambiente de desenvolvimento. Quadro: https://trello.com/invite/b/69e8f85fbd5b1e6133420b4f/ATTI2f11729442f5dd28207a891f37ca0d5e77651701/typeracing |
 | Desenvolvimento | 05/11/2026 | 05/11/2026 | 1,0 | Estudo tecnico de logica de digitacao em React, instalacao de dependencias e implementacao base do componente typing.jsx a partir de referencia tecnica | N | https://www.youtube.com/watch?v=J0vyTNxptZY | Lucas Hyan | Sessão das 21:00 às 22:00. Estudo do fluxo de cálculo de PPM/input controlado no tutorial e setup inicial de dependências do MVP local. |
 | Desenvolvimento | 07/11/2026 | 07/11/2026 | 1,0 | Resolucao de ambiente/scripts do Vite e implementacao da Parte 1 do MVP: estrutura do componente Typing.jsx com exibicao do texto alvo e captura de input controlado | N | https://github.com/lucasHyan/typeracing | Lucas Hyan | Sessão das 13:52 às 14:52. Resolução de dependências no client e implementação do componente funcional de digitação com contador de caracteres. |
-| Desenvolvimento | 07/11/2026 | 07/11/2026 | 3,0 | Implementacao da Parte 2 e 3 do MVP: comparador caractere a caractere (verde/vermelho), calculo de PPM em tempo real e pista de corrida com avatar do jogador | N | https://github.com/lucasHyan/typeracing | Lucas Hyan | Sessão das 15:00 às 18:00. Construção da validação visual instantânea, cronômetro de PPM em tempo real e renderização responsiva do carrinho na pista com suporte a múltiplos jogadores. |
+| Desenvolvimento | 07/11/2026 | 07/11/2026 | 4,0 | Implementacao da Parte 2 e 3 do MVP: comparador caractere a caractere (verde/vermelho), calculo de PPM em tempo real e pista de corrida com avatar do jogador | N | https://github.com/lucasHyan/typeracing | Lucas Hyan | Sessão das 15:00 às 19:00. Construção da validação visual instantânea, cronômetro de PPM em tempo real e renderização responsiva do carrinho na pista com suporte a múltiplos jogadores. |
 
 **TOTAL DE HORAS DECLARADAS:** 15,8 h
 
@@ -20,7 +20,7 @@
 | Prospecção | 0 | 0% |
 | Requisitos | 5,5 | 34,8% |
 | Planejamento/design | 5,3 | 33,5% |
-| Desenvolvimento | 5,0 | 31,7% |
+| Desenvolvimento | 6,0 | 31,7% |
 | Testes | 0 | 0% |
 | Entrega/implantação | 0 | 0% |
 | Treinamento | 0 | 0% |
