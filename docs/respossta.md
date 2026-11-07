@@ -23,3 +23,7 @@ DELIBERAÇÃO DE ANUÊNCIA:
 APROVADO PARA DESENVOLVIMENTO.
 
 Nota do Orientador: A contagem de horas válidas de extensão iniciou em 22/07, porém o cômputo formal está condicionado ao atendimento das adequações solicitadas nesta ficha e à comprovação no Timesheet.
+
+
+## colocar pessoa responsavel p receber as entregas 
+## registrar contato com o cliente
