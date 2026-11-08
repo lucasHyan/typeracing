@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
-import PlayerCustomizer from './PlayerCustomizer.jsx';
-import RaceTrack from './RaceTrack.jsx';
-import TypingArea from './TypingArea.jsx';
-
-const TEXTO_ALVO_PADRAO = "A programacao desenvolve o raciocinio logico e a resolucao de problemas na sala de aula.";
+import PlayerCustomizer from './PlayerCustomizer';
+import RaceTrack from './RaceTrack';
+import TypingArea from './TypingArea';
+import paragraphs from '../paragraphs.json';
 
 const CORES_DISPONIVEIS = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#9333ea'];
 
+const randomizeQuote = () => {
+  const indice = Math.floor(Math.random() * paragraphs.length);
+  return paragraphs[indice];
+};
+
 export default function Typing() {
-  const [targetText] = useState(TEXTO_ALVO_PADRAO);
+  const [targetText, setTargetText] = useState(randomizeQuote);
   const [userInput, setUserInput] = useState('');
-  
+
   const [playerName, setPlayerName] = useState('Aluno');
   const [carColor, setCarColor] = useState(CORES_DISPONIVEIS[0]);
 
@@ -65,11 +69,12 @@ export default function Typing() {
     setStartTime(null);
     setWpm(0);
     setIsFinished(false);
+    setTargetText(randomizeQuote());
   };
 
   return (
     <div style={{ maxWidth: 820, margin: '30px auto', fontFamily: 'system-ui, sans-serif', padding: 20 }}>
-      <h2>TypeRacing</h2>
+      <h2>TypeRacing — Modo Solo</h2>
 
       <PlayerCustomizer
         playerName={playerName}
