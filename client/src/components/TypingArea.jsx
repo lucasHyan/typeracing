@@ -1,4 +1,9 @@
-export default function TypingArea({ targetText, userInput, handleInputChange, isFinished }) {
+export default function TypingArea({
+  targetText,
+  userInput,
+  onInputChange,
+  isFinished
+}) {
   return (
     <>
       <div
@@ -34,8 +39,9 @@ export default function TypingArea({ targetText, userInput, handleInputChange, i
       <textarea
         rows={3}
         value={userInput}
-        onChange={handleInputChange}
+        onChange={onInputChange}
         disabled={isFinished}
+        maxLength={targetText.length}
         placeholder={isFinished ? "Corrida concluída! Clique em Jogar Novamente abaixo." : "Comece a digitar o texto acima..."}
         style={{
           width: '100%',

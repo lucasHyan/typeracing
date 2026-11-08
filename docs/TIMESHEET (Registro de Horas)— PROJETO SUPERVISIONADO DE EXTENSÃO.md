@@ -11,21 +11,22 @@
 | Desenvolvimento | 05/11/2026 | 05/11/2026 | 1,0 | Estudo tecnico de logica de digitacao em React, instalacao de dependencias e implementacao base do componente typing.jsx a partir de referencia tecnica | N | https://www.youtube.com/watch?v=J0vyTNxptZY | Lucas Hyan | Sessão das 21:00 às 22:00. Estudo do fluxo de cálculo de PPM/input controlado no tutorial e setup inicial de dependências do MVP local. |
 | Desenvolvimento | 07/11/2026 | 07/11/2026 | 1,0 | Resolucao de ambiente/scripts do Vite e implementacao da Parte 1 do MVP: estrutura do componente Typing.jsx com exibicao do texto alvo e captura de input controlado | N | https://github.com/lucasHyan/typeracing/tree/main/client | Lucas Hyan | Sessão das 13:52 às 14:52. Resolução de dependências no client e implementação do componente funcional de digitação com contador de caracteres. |
 | Desenvolvimento | 07/11/2026 | 07/11/2026 | 4,0 | Implementacao da Parte 2 e 3 do MVP: comparador caractere a caractere (verde/vermelho), calculo de PPM em tempo real e pista de corrida com avatar do jogador | N | https://github.com/lucasHyan/typeracing/commits/main | Lucas Hyan | Sessão das 15:00 às 19:00. Construção da validação visual instantânea, cronômetro de PPM em tempo real e renderização responsiva do carrinho na pista com suporte a múltiplos jogadores. |
+| Desenvolvimento | 08/11/2026 | 08/11/2026 | 5,2 | Inclusao de repositorio JSON de frases, correcao de bugs no PPM, regra de trava de palavra no erro, animacao de tremor e refatoracao | N | https://github.com/lucasHyan/typeracing/commits/main | Lucas Hyan | Sessão das 14:48 às 20:00. Integração de paragrafos.json com sorteio dinâmico, correção do PPM em tempo real com reset funcional, bloqueio de avanço de palavra no erro, efeito nativo de shake e modularização em typingUtils.js e animations.js. |
 
-**TOTAL DE HORAS DECLARADAS:** 16,8 h
+**TOTAL DE HORAS DECLARADAS:** 22,0 h
 
 ### Resumo por etapa
 | Etapa | Horas | % do total |
 | :--- | :--- | :--- |
 | Prospecção | 0 | 0% |
-| Requisitos | 5,5 | 32,7% |
-| Planejamento/design | 5,3 | 31,5% |
-| Desenvolvimento | 6,0 | 35,8% |
+| Requisitos | 5,5 | 25,0% |
+| Planejamento/design | 5,3 | 24,1% |
+| Desenvolvimento | 11,2 | 50,9% |
 | Testes | 0 | 0% |
 | Entrega/implantação | 0 | 0% |
 | Treinamento | 0 | 0% |
 | Documentação | 0 | 0% |
-| **Total** | 16,8 | 100% |
+| **Total** | 22,0 | 100% |
 
 ### Resumo de encontros com o cliente (presenciais ou síncronos)
 - **Horas em encontros com o cliente:** 0 h

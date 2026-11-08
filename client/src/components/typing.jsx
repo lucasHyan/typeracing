@@ -1,88 +1,105 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PlayerCustomizer from './PlayerCustomizer';
 import RaceTrack from './RaceTrack';
 import TypingArea from './TypingArea';
 import paragraphs from '../paragraphs.json';
+import { shakeElement } from './animations';
+import {
+  calculateProgress,
+  calculateWpm,
+  getInputUpdate,
+  getRandomParagraph
+} from './typingUtils';
 
-const CORES_DISPONIVEIS = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#9333ea'];
-
-const randomizeQuote = () => {
-  const indice = Math.floor(Math.random() * paragraphs.length);
-  return paragraphs[indice];
-};
+const AVAILABLE_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#9333ea'];
 
 export default function Typing() {
-  const [targetText, setTargetText] = useState(randomizeQuote);
+  const [targetText, setTargetText] = useState(() => getRandomParagraph(paragraphs));
   const [userInput, setUserInput] = useState('');
 
   const [playerName, setPlayerName] = useState('Aluno');
-  const [carColor, setCarColor] = useState(CORES_DISPONIVEIS[0]);
+  const [carColor, setCarColor] = useState(AVAILABLE_COLORS[0]);
 
-  const [startTime, setStartTime] = useState(null);
-  const [wpm, setWpm] = useState(0);
+  const [startTimeMs, setStartTimeMs] = useState(null);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
+  const screenRef = useRef(null);
 
-  const handleInputChange = (e) => {
-    if (isFinished) return;
-
-    const val = e.target.value;
-
-    if (!startTime && val.length > 0) {
-      setStartTime(Date.now());
+  const handleInputChange = (event) => {
+    if (isFinished) {
+      return;
     }
 
-    setUserInput(val);
+    const { input: nextInput, shouldShake } = getInputUpdate(
+      targetText,
+      userInput,
+      event.target.value
+    );
 
-    if (val.length >= targetText.length) {
+    if (shouldShake) {
+      shakeElement(screenRef.current);
+    }
+
+    setUserInput(nextInput);
+
+    const nextStartTime = startTimeMs ?? Date.now();
+    if (!startTimeMs && nextInput.length > 0) {
+      setStartTimeMs(nextStartTime);
+    }
+
+    if (nextInput === targetText) {
+      setElapsedMs(Date.now() - nextStartTime);
       setIsFinished(true);
     }
   };
 
-  const progresso = Math.min(100, Math.round((userInput.length / targetText.length) * 100));
+  const progress = calculateProgress(userInput.length, targetText.length);
+  const wpm = calculateWpm(userInput.length, elapsedMs);
 
   useEffect(() => {
-    if (!startTime || userInput.length === 0 || isFinished) return;
+    if (!startTimeMs || isFinished) {
+      return;
+    }
 
-    const interval = setInterval(() => {
-      const minutos = (Date.now() - startTime) / 1000 / 60;
-      if (minutos > 0) {
-        const calculoWpm = Math.round((userInput.length / 5) / minutos);
-        setWpm(calculoWpm);
-      }
-    }, 500);
+    const updateElapsedTime = () => setElapsedMs(Date.now() - startTimeMs);
+    updateElapsedTime();
+    const interval = setInterval(updateElapsedTime, 250);
 
     return () => clearInterval(interval);
-  }, [startTime, userInput, isFinished]);
+  }, [startTimeMs, isFinished]);
 
   const players = [
     {
       id: 'local',
       name: playerName,
       color: carColor,
-      progress: progresso,
-      wpm: wpm
+      progress,
+      wpm
     }
   ];
 
-  const reiniciarJogo = () => {
+  const restartGame = () => {
     setUserInput('');
-    setStartTime(null);
-    setWpm(0);
+    setStartTimeMs(null);
+    setElapsedMs(0);
     setIsFinished(false);
-    setTargetText(randomizeQuote());
+    setTargetText(getRandomParagraph(paragraphs));
   };
 
   return (
-    <div style={{ maxWidth: 820, margin: '30px auto', fontFamily: 'system-ui, sans-serif', padding: 20 }}>
+    <div
+      ref={screenRef}
+      style={{ maxWidth: 820, margin: '30px auto', fontFamily: 'system-ui, sans-serif', padding: 20 }}
+    >
       <h2>TypeRacing — Modo Solo</h2>
 
       <PlayerCustomizer
         playerName={playerName}
-        setPlayerName={setPlayerName}
+        onPlayerNameChange={setPlayerName}
         carColor={carColor}
-        setCarColor={setCarColor}
-        disabled={!!startTime && !isFinished}
-        CORES_DISPONIVEIS={CORES_DISPONIVEIS}
+        onCarColorChange={setCarColor}
+        disabled={!!startTimeMs && !isFinished}
+        colorOptions={AVAILABLE_COLORS}
       />
 
       <RaceTrack players={players} />
@@ -90,19 +107,19 @@ export default function Typing() {
       <TypingArea
         targetText={targetText}
         userInput={userInput}
-        handleInputChange={handleInputChange}
+        onInputChange={handleInputChange}
         isFinished={isFinished}
       />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
         <div style={{ display: 'flex', gap: 24, fontSize: 16, color: '#334155' }}>
           <span><strong>Velocidade:</strong> {wpm} PPM</span>
-          <span><strong>Progresso:</strong> {progresso}%</span>
+          <span><strong>Progresso:</strong> {progress}%</span>
         </div>
 
         {isFinished && (
           <button
-            onClick={reiniciarJogo}
+            onClick={restartGame}
             style={{
               background: '#16a34a',
               color: '#fff',
