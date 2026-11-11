@@ -1,8 +1,8 @@
-import './App.css';
-import Typing from './components/typing.jsx';
+import "./App.css";
+import Lobby from "./components/Lobby.jsx";
 
 function App() {
-  return <Typing />;
+  return <Lobby />;
 }
 
 export default App;
