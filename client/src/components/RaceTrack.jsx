@@ -1,35 +1,31 @@
 export default function RaceTrack({ players }) {
   return (
-    <div style={{ background: '#0f172a', padding: '20px 16px', borderRadius: 12, marginBottom: 20 }}>
-      <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12, letterSpacing: '1px' }}>PISTA DE CORRIDA</div>
+    <section className="mb-5 rounded-xl bg-slate-900 p-4 sm:p-5">
+      <h2 className="mb-3 text-xs font-bold tracking-widest text-slate-400">
+        PISTA DE CORRIDA
+      </h2>
 
       {players.map((player) => (
-        <div key={player.id} style={{ position: 'relative', height: 44, borderBottom: '2px dashed #334155' }}>
+        <div
+          key={player.id}
+          className="relative h-12 border-b-2 border-dashed border-slate-700 last:border-0"
+        >
           <div
-            style={{
-              position: 'absolute',
-              left: `${player.progress}%`,
-              transform: 'translateX(-50%)',
-              transition: 'left 0.15s ease-out',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6
-            }}
+            className="absolute top-1/2 flex -translate-y-1/2 items-center gap-2 transition-[left] duration-150 ease-out"
+            style={{ left: `${player.progress}%` }}
           >
-            <span style={{ fontSize: 24 }}>🚀</span>
-            <span style={{
-              background: player.color,
-              color: '#fff',
-              fontSize: 11,
-              fontWeight: 'bold',
-              padding: '2px 8px',
-              borderRadius: 12
-            }}>
+            <span className="text-2xl" aria-hidden="true">
+              {player.emoji || '🚗'}
+            </span>
+            <span
+              className="whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
+              style={{ backgroundColor: player.color || '#2563eb' }}
+            >
               {player.name} ({player.progress}%)
             </span>
           </div>
         </div>
       ))}
-    </div>
+    </section>
   );
 }

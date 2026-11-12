@@ -5,31 +5,22 @@ export default function TypingArea({
   isFinished
 }) {
   return (
-    <>
+    <div className="space-y-4">
       <div
-        style={{
-          fontSize: 20,
-          lineHeight: 1.8,
-          padding: 16,
-          background: '#f8fafc',
-          borderRadius: 8,
-          border: '1px solid #e2e8f0',
-          marginBottom: 16,
-          userSelect: 'none'
-        }}
+        className="select-none rounded-lg border border-slate-700 bg-slate-950 p-4 text-left text-lg leading-relaxed sm:text-xl"
       >
         {targetText.split('').map((char, index) => {
-          let color = '#94a3b8';
-          let backgroundColor = 'transparent';
+          let className = 'text-slate-500';
 
           if (index < userInput.length) {
             const isCorrect = userInput[index] === char;
-            color = isCorrect ? '#16a34a' : '#dc2626';
-            backgroundColor = isCorrect ? 'transparent' : '#fee2e2';
+            className = isCorrect
+              ? 'text-emerald-400'
+              : 'rounded-sm bg-red-500/20 text-red-300';
           }
 
           return (
-            <span key={index} style={{ color, backgroundColor, borderRadius: 2 }}>
+            <span key={index} className={className}>
               {char}
             </span>
           );
@@ -42,17 +33,10 @@ export default function TypingArea({
         onChange={onInputChange}
         disabled={isFinished}
         maxLength={targetText.length}
-        placeholder={isFinished ? "Corrida concluída! Clique em Jogar Novamente abaixo." : "Comece a digitar o texto acima..."}
-        style={{
-          width: '100%',
-          fontSize: 16,
-          padding: 12,
-          boxSizing: 'border-box',
-          borderRadius: 6,
-          border: '2px solid #cbd5e1',
-          outline: 'none'
-        }}
+        placeholder={isFinished ? 'Corrida concluída!' : 'Comece a digitar o texto acima...'}
+        aria-label="Digite o texto da corrida"
+        className="min-h-28 w-full resize-y rounded-lg border border-slate-600 bg-slate-950 p-3 text-base text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 disabled:cursor-not-allowed disabled:opacity-70"
       />
-    </>
+    </div>
   );
 }

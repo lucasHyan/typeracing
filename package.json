@@ -1,6 +1,11 @@
 {
-  "dependencies": {
-    "@tailwindcss/vite": "^4.3.4",
-    "tailwindcss": "^4.3.4"
+  "name": "typeracing",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix client run dev",
+    "build": "npm --prefix client run build",
+    "lint": "npm --prefix client run lint",
+    "server:dev": "npm --prefix server run dev",
+    "server:start": "npm --prefix server start"
   }
 }
