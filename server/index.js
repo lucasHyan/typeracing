@@ -6,6 +6,10 @@ const { Server } = require("socket.io");
 const app = express();
 app.use(cors());
 
+app.get("/", (_req, res) => {
+  res.json({ status: "ok", activeRooms: Object.keys(rooms).length });
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
