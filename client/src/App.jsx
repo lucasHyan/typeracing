@@ -6,20 +6,6 @@ import socket from './services/socket.js';
 import { playersById } from './utils/gamePresentation.js';
 
 function RaceCountdown({ room, onLeaveRoom }) {
-  const [now, setNow] = useState(null);
-
-  useEffect(() => {
-    const updateNow = () => setNow(Date.now());
-    updateNow();
-    const intervalId = setInterval(updateNow, 100);
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const remainingSeconds =
-    now === null
-      ? 3
-      : Math.max(0, Math.ceil((room.countdownDeadline - now) / 1000));
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
       <section className="w-full max-w-lg space-y-6 rounded-2xl border border-slate-800 bg-slate-900/90 p-8 text-center shadow-2xl">
@@ -32,7 +18,7 @@ function RaceCountdown({ room, onLeaveRoom }) {
           aria-live="polite"
           className="text-8xl font-black tabular-nums text-emerald-400"
         >
-          {remainingSeconds || 'JÁ!'}
+          {room.countdownSeconds}
         </p>
         <button
           type="button"
@@ -73,8 +59,9 @@ function App() {
               code: data.roomCode || currentRoom.code,
               status: 'racing',
               targetText: data.targetText,
-              countdownDeadline: null,
+              countdownSeconds: null,
               finishDeadline: null,
+              finishSecondsRemaining: null,
               players: data.players
                 ? playersById(data.players)
                 : currentRoom.players,
@@ -96,8 +83,9 @@ function App() {
               ...currentRoom,
               status: 'countdown',
               targetText: data.targetText,
-              countdownDeadline: data.deadlineAt,
+              countdownSeconds: data.secondsRemaining,
               finishDeadline: null,
+              finishSecondsRemaining: null,
             }
           : currentRoom,
       );
@@ -119,7 +107,10 @@ function App() {
     const handleRaceTimer = (data) => {
       setRoom((currentRoom) =>
         currentRoom?.code === data.roomCode
-          ? { ...currentRoom, finishDeadline: data.deadlineAt }
+          ? {
+              ...currentRoom,
+              finishSecondsRemaining: data.secondsRemaining,
+            }
           : currentRoom,
       );
     };
@@ -131,6 +122,7 @@ function App() {
               ...currentRoom,
               status: 'finished',
               finishDeadline: null,
+              finishSecondsRemaining: null,
               players: data.players
                 ? playersById(data.players)
                 : currentRoom.players,
@@ -143,8 +135,9 @@ function App() {
     const handleRoomLobby = (data) => {
       setRoom({
         ...data.room,
-        countdownDeadline: null,
+        countdownSeconds: null,
         finishDeadline: null,
+        finishSecondsRemaining: null,
       });
       setRace(null);
     };

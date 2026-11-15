@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
+const { performance } = require("node:perf_hooks");
 
 const app = express();
 app.use(cors());
@@ -20,7 +21,7 @@ const io = new Server(server, {
 
 const rooms = {};
 const DEFAULT_TEXT = "Programar todos os dias melhora sua lógica e velocidade.";
-const RACE_START_COUNTDOWN_MS = 3_000;
+const RACE_START_COUNTDOWN_SECONDS = 3;
 const FINISH_COUNTDOWN_MS = 30_000;
 const FINISH_TIME_EXTENSION_MS = 10_000;
 const VEHICLE_EMOJIS = new Set([
@@ -85,6 +86,7 @@ function createPlayer(id, name, color) {
     emoji: "🚗",
     progress: 0,
     wpm: 0,
+    errors: 0,
     isFinished: false,
     elapsedMs: null,
     finishTime: null,
@@ -109,12 +111,13 @@ function clearFinishTimer(room) {
   if (room.finishTimeout) clearTimeout(room.finishTimeout);
   room.finishTimeout = null;
   room.finishDeadline = null;
+  room.finishSecondsRemaining = null;
 }
 
 function clearStartCountdown(room) {
   if (room.countdownTimeout) clearTimeout(room.countdownTimeout);
   room.countdownTimeout = null;
-  room.countdownDeadline = null;
+  room.countdownSeconds = null;
   room.countdownTargetText = null;
 }
 
@@ -133,19 +136,25 @@ function finishRace(room) {
 
 function scheduleFinishTimer(room) {
   if (room.finishTimeout) clearTimeout(room.finishTimeout);
-  room.finishTimeout = setTimeout(
-    () => finishRace(room),
-    Math.max(0, room.finishDeadline - Date.now()),
-  );
+  const remainingMs = room.finishDeadline - performance.now();
+  if (remainingMs <= 0) {
+    finishRace(room);
+    return;
+  }
+  room.finishSecondsRemaining = Math.ceil(remainingMs / 1000);
   io.to(room.code).emit("race_timer", {
     roomCode: room.code,
-    deadlineAt: room.finishDeadline,
+    secondsRemaining: room.finishSecondsRemaining,
   });
+  room.finishTimeout = setTimeout(
+    () => scheduleFinishTimer(room),
+    Math.min(1000, remainingMs),
+  );
 }
 
 function startFinishTimer(room) {
   if (room.finishDeadline) return;
-  room.finishDeadline = Date.now() + FINISH_COUNTDOWN_MS;
+  room.finishDeadline = performance.now() + FINISH_COUNTDOWN_MS;
   scheduleFinishTimer(room);
 }
 
@@ -173,6 +182,7 @@ function startRace(room, targetText) {
   Object.values(room.players).forEach((player) => {
     player.progress = 0;
     player.wpm = 0;
+    player.errors = 0;
     player.isFinished = false;
     player.elapsedMs = null;
     player.finishTime = null;
@@ -186,21 +196,30 @@ function startRace(room, targetText) {
   });
 }
 
+function tickRaceCountdown(room, secondsRemaining) {
+  if (room.status !== "countdown") return;
+  if (secondsRemaining <= 0) {
+    startRace(room, room.countdownTargetText);
+    return;
+  }
+
+  room.countdownSeconds = secondsRemaining;
+  io.to(room.code).emit("race_countdown", {
+    roomCode: room.code,
+    targetText: room.countdownTargetText,
+    secondsRemaining,
+  });
+  room.countdownTimeout = setTimeout(
+    () => tickRaceCountdown(room, secondsRemaining - 1),
+    1000,
+  );
+}
+
 function startRaceCountdown(room, targetText) {
   clearStartCountdown(room);
   room.status = "countdown";
   room.countdownTargetText = cleanTargetText(targetText, room.targetText);
-  room.countdownDeadline = Date.now() + RACE_START_COUNTDOWN_MS;
-  room.countdownTimeout = setTimeout(
-    () => startRace(room, room.countdownTargetText),
-    RACE_START_COUNTDOWN_MS,
-  );
-
-  io.to(room.code).emit("race_countdown", {
-    roomCode: room.code,
-    targetText: room.countdownTargetText,
-    deadlineAt: room.countdownDeadline,
-  });
+  tickRaceCountdown(room, RACE_START_COUNTDOWN_SECONDS);
 }
 
 io.on("connection", (socket) => {
@@ -217,11 +236,12 @@ io.on("connection", (socket) => {
       code: roomCode,
       hostId: socket.id,
       status: "waiting",
-      countdownDeadline: null,
+      countdownSeconds: null,
       countdownTargetText: null,
       countdownTimeout: null,
       finishDeadline: null,
       finishTimeout: null,
+      finishSecondsRemaining: null,
       targetText: cleanTargetText(data.targetText),
       players: {
         [socket.id]: createPlayer(
@@ -342,6 +362,9 @@ io.on("connection", (socket) => {
       Math.round((input.length / room.targetText.length) * 100),
     );
     player.wpm = Math.round((input.length / 5) / (elapsedMs / 60000));
+    if (Number.isSafeInteger(data.errors) && data.errors >= 0) {
+      player.errors = data.errors;
+    }
 
     if (input === room.targetText) {
       player.isFinished = true;
@@ -371,7 +394,7 @@ io.on("connection", (socket) => {
       socket.emit("error_message", "O tempo extra ainda não está disponível.");
       return;
     }
-    if (room.finishDeadline <= Date.now()) {
+    if (room.finishDeadline <= performance.now()) {
       finishRace(room);
       return;
     }
@@ -423,6 +446,7 @@ io.on("connection", (socket) => {
     Object.values(room.players).forEach((player) => {
       player.progress = 0;
       player.wpm = 0;
+      player.errors = 0;
       player.isFinished = false;
       player.elapsedMs = null;
       player.finishTime = null;

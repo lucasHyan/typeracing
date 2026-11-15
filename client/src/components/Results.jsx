@@ -61,6 +61,9 @@ export default function Results({ room, onLeaveRoom }) {
                     ? formatRaceTime(player.elapsedMs)
                     : `${player.progress || 0}%`}
                 </span>
+                <span className="block text-xs text-slate-400">
+                  {player.errors || 0} erros
+                </span>
               </span>
             </li>
           ))}

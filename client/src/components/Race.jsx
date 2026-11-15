@@ -16,10 +16,10 @@ export default function Race({ room, race, onLeaveRoom }) {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
   const [finalWpm, setFinalWpm] = useState(null);
-  const [now, setNow] = useState(null);
+  const [errorCount, setErrorCount] = useState(0);
   const screenRef = useRef(null);
+  const errorCountRef = useRef(0);
   const startTime = race.startTime;
-  const finishDeadline = room.finishDeadline;
   const isHost = room.hostId === socket.id;
 
   useEffect(() => {
@@ -34,15 +34,6 @@ export default function Race({ room, race, onLeaveRoom }) {
     return () => clearInterval(intervalId);
   }, [startTime, isFinished]);
 
-  useEffect(() => {
-    if (!finishDeadline) return undefined;
-
-    const updateNow = () => setNow(Date.now());
-    updateNow();
-    const intervalId = setInterval(updateNow, 250);
-    return () => clearInterval(intervalId);
-  }, [finishDeadline]);
-
   const handleInputChange = (event) => {
     if (isFinished) return;
 
@@ -55,6 +46,19 @@ export default function Race({ room, race, onLeaveRoom }) {
     if (shouldShake) shakeElement(screenRef.current);
     setUserInput(nextInput);
 
+    let newErrors = 0;
+    for (let index = 0; index < nextInput.length; index += 1) {
+      if (
+        nextInput[index] !== userInput[index] &&
+        nextInput[index] !== targetText[index]
+      ) {
+        newErrors += 1;
+      }
+    }
+    const nextErrorCount = errorCountRef.current + newErrors;
+    errorCountRef.current = nextErrorCount;
+    setErrorCount(nextErrorCount);
+
     const nextElapsedMs = Math.max(1, Date.now() - startTime);
     const nextWpm = calculateWpm(nextInput.length, nextElapsedMs);
     const finished = nextInput === targetText;
@@ -63,6 +67,7 @@ export default function Race({ room, race, onLeaveRoom }) {
       roomCode: race.roomCode || room.code,
       input: nextInput,
       wpm: nextWpm,
+      errors: nextErrorCount,
     });
 
     if (finished) {
@@ -74,9 +79,7 @@ export default function Race({ room, race, onLeaveRoom }) {
 
   const progress = calculateProgress(userInput.length, targetText.length);
   const wpm = finalWpm ?? calculateWpm(userInput.length, elapsedMs);
-  const remainingSeconds = finishDeadline && now !== null
-    ? Math.max(0, Math.ceil((finishDeadline - now) / 1000))
-    : null;
+  const remainingSeconds = room.finishSecondsRemaining ?? null;
   const players = Object.values(room.players || {});
 
   return (
@@ -111,6 +114,10 @@ export default function Race({ room, race, onLeaveRoom }) {
           <p>
             <span className="block text-xs uppercase text-slate-400">Progresso</span>
             <strong className="text-xl">{progress}%</strong>
+          </p>
+          <p>
+            <span className="block text-xs uppercase text-slate-400">Erros</span>
+            <strong className="text-xl">{errorCount}</strong>
           </p>
         </section>
 
