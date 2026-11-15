@@ -25,7 +25,7 @@ function PlayerList({ players, hostId, socketId }) {
             </span>
             {player.id === hostId && (
               <span className="ml-2 shrink-0 rounded bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-400">
-                Professor
+                Dono da sala
               </span>
             )}
           </li>
@@ -40,6 +40,7 @@ export default function WaitingRoom({
   socketId,
   onStartRace,
   onCustomizationChange,
+  onLeaveRoom,
 }) {
   const players = Object.values(room.players || {});
   const isHost = room.hostId === socketId;
@@ -76,9 +77,16 @@ export default function WaitingRoom({
         </button>
       ) : (
         <p className="rounded-lg border border-dashed border-slate-700 bg-slate-950/50 py-3 text-center text-sm text-slate-400">
-          Aguardando o professor iniciar a corrida...
+          Aguardando o dono da sala iniciar a corrida...
         </p>
       )}
+      <button
+        type="button"
+        onClick={onLeaveRoom}
+        className="w-full rounded-xl border border-slate-700 py-3 text-sm font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
+      >
+        Voltar à tela inicial
+      </button>
     </section>
   );
 }

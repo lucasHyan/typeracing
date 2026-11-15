@@ -14,6 +14,15 @@ function App() {
     setRoom(roomData);
   }, []);
 
+  const handleLeaveRoom = useCallback(() => {
+    if (room?.code) {
+      socket.emit('leave_room', { roomCode: room.code });
+    }
+    setRoom(null);
+    setRace(null);
+    setRoomMessage('');
+  }, [room]);
+
   useEffect(() => {
     const handleRaceStarted = (data) => {
       setRoom((currentRoom) =>
@@ -23,6 +32,7 @@ function App() {
               code: data.roomCode || currentRoom.code,
               status: 'racing',
               targetText: data.targetText,
+              finishDeadline: null,
               players: data.players
                 ? playersById(data.players)
                 : currentRoom.players,
@@ -49,12 +59,21 @@ function App() {
       );
     };
 
+    const handleRaceTimer = (data) => {
+      setRoom((currentRoom) =>
+        currentRoom?.code === data.roomCode
+          ? { ...currentRoom, finishDeadline: data.deadlineAt }
+          : currentRoom,
+      );
+    };
+
     const handleRaceFinished = (data) => {
       setRoom((currentRoom) =>
         currentRoom
           ? {
               ...currentRoom,
               status: 'finished',
+              finishDeadline: null,
               players: data.players
                 ? playersById(data.players)
                 : currentRoom.players,
@@ -62,6 +81,11 @@ function App() {
             }
           : currentRoom,
       );
+    };
+
+    const handleRoomLobby = (data) => {
+      setRoom({ ...data.room, finishDeadline: null });
+      setRace(null);
     };
 
     const handleRoomClosed = (message) => {
@@ -78,30 +102,36 @@ function App() {
 
     socket.on('race_started', handleRaceStarted);
     socket.on('update_players', handlePlayersUpdated);
+    socket.on('race_timer', handleRaceTimer);
     socket.on('race_finished', handleRaceFinished);
+    socket.on('room_lobby', handleRoomLobby);
     socket.on('room_closed', handleRoomClosed);
     socket.on('disconnect', handleDisconnect);
 
     return () => {
       socket.off('race_started', handleRaceStarted);
       socket.off('update_players', handlePlayersUpdated);
+      socket.off('race_timer', handleRaceTimer);
       socket.off('race_finished', handleRaceFinished);
+      socket.off('room_lobby', handleRoomLobby);
       socket.off('room_closed', handleRoomClosed);
       socket.off('disconnect', handleDisconnect);
     };
   }, []);
 
   if (room?.status === 'racing' && race) {
-    return <Race room={room} race={race} />;
+    return <Race room={room} race={race} onLeaveRoom={handleLeaveRoom} />;
   }
 
   if (room?.status === 'finished') {
-    return <Results room={room} />;
+    return <Results room={room} onLeaveRoom={handleLeaveRoom} />;
   }
 
   return (
     <Lobby
+      initialRoom={room}
       onRoomDataChange={handleRoomDataChange}
+      onLeaveRoom={handleLeaveRoom}
       initialMessage={roomMessage}
     />
   );

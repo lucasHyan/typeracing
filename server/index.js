@@ -20,6 +20,8 @@ const io = new Server(server, {
 
 const rooms = {};
 const DEFAULT_TEXT = "Programar todos os dias melhora sua lógica e velocidade.";
+const FINISH_COUNTDOWN_MS = 30_000;
+const FINISH_TIME_EXTENSION_MS = 10_000;
 const VEHICLE_EMOJIS = new Set([
   "🚗",
   "🏎️",
@@ -102,6 +104,43 @@ function getResults(room) {
     .map((player, index) => ({ ...player, place: index + 1 }));
 }
 
+function clearFinishTimer(room) {
+  if (room.finishTimeout) clearTimeout(room.finishTimeout);
+  room.finishTimeout = null;
+  room.finishDeadline = null;
+}
+
+function finishRace(room) {
+  if (room.status !== "racing") return;
+
+  clearFinishTimer(room);
+  room.status = "finished";
+  room.results = getResults(room);
+  io.to(room.code).emit("race_finished", {
+    roomCode: room.code,
+    players: getRoomPlayerList(room),
+    results: room.results,
+  });
+}
+
+function scheduleFinishTimer(room) {
+  if (room.finishTimeout) clearTimeout(room.finishTimeout);
+  room.finishTimeout = setTimeout(
+    () => finishRace(room),
+    Math.max(0, room.finishDeadline - Date.now()),
+  );
+  io.to(room.code).emit("race_timer", {
+    roomCode: room.code,
+    deadlineAt: room.finishDeadline,
+  });
+}
+
+function startFinishTimer(room) {
+  if (room.finishDeadline) return;
+  room.finishDeadline = Date.now() + FINISH_COUNTDOWN_MS;
+  scheduleFinishTimer(room);
+}
+
 function finishRaceIfReady(room) {
   const players = getRoomPlayerList(room);
   if (
@@ -112,16 +151,11 @@ function finishRaceIfReady(room) {
     return;
   }
 
-  room.status = "finished";
-  room.results = getResults(room);
-  io.to(room.code).emit("race_finished", {
-    roomCode: room.code,
-    players,
-    results: room.results,
-  });
+  finishRace(room);
 }
 
 function startRace(room, targetText) {
+  clearFinishTimer(room);
   room.status = "racing";
   room.targetText = cleanTargetText(targetText, room.targetText);
   room.startedAt = Date.now();
@@ -157,11 +191,13 @@ io.on("connection", (socket) => {
       code: roomCode,
       hostId: socket.id,
       status: "waiting",
+      finishDeadline: null,
+      finishTimeout: null,
       targetText: cleanTargetText(data.targetText),
       players: {
         [socket.id]: createPlayer(
           socket.id,
-          cleanPlayerName(data.playerName, "Professor"),
+          cleanPlayerName(data.playerName, "Dono da sala"),
           cleanColor(data.carColor, "#2563eb"),
         ),
       },
@@ -245,7 +281,7 @@ io.on("connection", (socket) => {
       return;
     }
     if (room.hostId !== socket.id) {
-      socket.emit("error_message", "Somente o professor pode iniciar a corrida.");
+      socket.emit("error_message", "Somente o dono da sala pode iniciar a corrida.");
       return;
     }
     if (room.status !== "waiting") {
@@ -282,11 +318,37 @@ io.on("connection", (socket) => {
       player.isFinished = true;
       player.elapsedMs = elapsedMs;
       player.finishTime = Date.now();
+      startFinishTimer(room);
     }
 
     const players = getRoomPlayerList(room);
     io.to(roomCode).emit("update_players", { roomCode, players });
     finishRaceIfReady(room);
+  });
+
+  socket.on("extend_race_timer", (data = {}) => {
+    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const room = rooms[roomCode];
+
+    if (!room || !room.players[socket.id]) {
+      socket.emit("error_message", "Você não está nesta sala.");
+      return;
+    }
+    if (room.hostId !== socket.id) {
+      socket.emit("error_message", "Somente o dono da sala pode aumentar o tempo.");
+      return;
+    }
+    if (room.status !== "racing" || !room.finishDeadline) {
+      socket.emit("error_message", "O tempo extra ainda não está disponível.");
+      return;
+    }
+    if (room.finishDeadline <= Date.now()) {
+      finishRace(room);
+      return;
+    }
+
+    room.finishDeadline += FINISH_TIME_EXTENSION_MS;
+    scheduleFinishTimer(room);
   });
 
   socket.on("start_another_race", (data = {}) => {
@@ -298,7 +360,7 @@ io.on("connection", (socket) => {
       return;
     }
     if (room.hostId !== socket.id) {
-      socket.emit("error_message", "Somente o professor pode iniciar outra partida.");
+      socket.emit("error_message", "Somente o dono da sala pode iniciar outra partida.");
       return;
     }
     if (room.status !== "finished") {
@@ -307,6 +369,70 @@ io.on("connection", (socket) => {
     }
 
     startRace(room, data.targetText);
+  });
+
+  socket.on("return_to_lobby", (data = {}) => {
+    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const room = rooms[roomCode];
+
+    if (!room || !room.players[socket.id]) {
+      socket.emit("error_message", "Você não está nesta sala.");
+      return;
+    }
+    if (room.hostId !== socket.id) {
+      socket.emit("error_message", "Somente o dono da sala pode voltar ao lobby.");
+      return;
+    }
+    if (room.status !== "finished") {
+      socket.emit("error_message", "A partida atual ainda não foi finalizada.");
+      return;
+    }
+
+    room.status = "waiting";
+    room.targetText = cleanTargetText(data.targetText, room.targetText);
+    room.results = [];
+    Object.values(room.players).forEach((player) => {
+      player.progress = 0;
+      player.wpm = 0;
+      player.isFinished = false;
+      player.elapsedMs = null;
+      player.finishTime = null;
+    });
+
+    io.to(roomCode).emit("room_lobby", { room });
+  });
+
+  socket.on("leave_room", (data = {}) => {
+    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const room = rooms[roomCode];
+
+    if (!room || !room.players[socket.id]) return;
+
+    if (room.hostId === socket.id) {
+      io.to(roomCode).emit(
+        "room_closed",
+        "O dono da sala saiu. A sala foi encerrada.",
+      );
+      clearFinishTimer(room);
+      delete rooms[roomCode];
+      socket.leave(roomCode);
+      return;
+    }
+
+    delete room.players[socket.id];
+    socket.leave(roomCode);
+    io.to(roomCode).emit("update_players", {
+      roomCode,
+      players: getRoomPlayerList(room),
+    });
+
+    if (Object.keys(room.players).length === 0) {
+      clearFinishTimer(room);
+      delete rooms[roomCode];
+      return;
+    }
+
+    finishRaceIfReady(room);
   });
 
   socket.on("disconnect", () => {
@@ -320,8 +446,9 @@ io.on("connection", (socket) => {
     if (room.hostId === socket.id) {
       io.to(room.code).emit(
         "room_closed",
-        "O professor desconectou. A sala foi encerrada.",
+        "O dono da sala desconectou. A sala foi encerrada.",
       );
+      clearFinishTimer(room);
       delete rooms[room.code];
       console.log(`Room closed by host: ${room.code}`);
       return;
@@ -334,6 +461,7 @@ io.on("connection", (socket) => {
     });
 
     if (Object.keys(room.players).length === 0) {
+      clearFinishTimer(room);
       delete rooms[room.code];
       console.log(`Room deleted: ${room.code}`);
       return;

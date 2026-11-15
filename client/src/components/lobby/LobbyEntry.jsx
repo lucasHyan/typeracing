@@ -34,7 +34,7 @@ export default function LobbyEntry({
           <div>
             <h3 className="font-semibold text-slate-100">Criar uma sala</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Professor, crie a sala e compartilhe o código com os alunos.
+              Crie uma sala e compartilhe o código com os jogadores.
             </p>
           </div>
           <button
@@ -51,7 +51,7 @@ export default function LobbyEntry({
           <div>
             <h3 className="font-semibold text-slate-100">Entrar em uma sala</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Digite o código de 5 caracteres fornecido pelo professor.
+              Digite o código de 5 caracteres compartilhado pelo dono da sala.
             </p>
           </div>
           <form onSubmit={onJoinRoom} className="space-y-3">

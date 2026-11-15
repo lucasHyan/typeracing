@@ -10,23 +10,38 @@ import {
 import socket from '../services/socket';
 import { formatRaceTime } from '../utils/gamePresentation';
 
-export default function Race({ room, race }) {
+export default function Race({ room, race, onLeaveRoom }) {
   const targetText = race.targetText || room.targetText;
   const [userInput, setUserInput] = useState('');
   const [elapsedMs, setElapsedMs] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
+  const [finalWpm, setFinalWpm] = useState(null);
+  const [now, setNow] = useState(null);
   const screenRef = useRef(null);
   const startTime = race.startTime;
+  const finishDeadline = room.finishDeadline;
+  const isHost = room.hostId === socket.id;
 
   useEffect(() => {
     const updateElapsedTime = () => {
-      setElapsedMs(Math.max(0, Date.now() - startTime));
+      if (!isFinished) {
+        setElapsedMs(Math.max(0, Date.now() - startTime));
+      }
     };
 
     updateElapsedTime();
     const intervalId = setInterval(updateElapsedTime, 100);
     return () => clearInterval(intervalId);
-  }, [startTime]);
+  }, [startTime, isFinished]);
+
+  useEffect(() => {
+    if (!finishDeadline) return undefined;
+
+    const updateNow = () => setNow(Date.now());
+    updateNow();
+    const intervalId = setInterval(updateNow, 250);
+    return () => clearInterval(intervalId);
+  }, [finishDeadline]);
 
   const handleInputChange = (event) => {
     if (isFinished) return;
@@ -52,12 +67,16 @@ export default function Race({ room, race }) {
 
     if (finished) {
       setElapsedMs(nextElapsedMs);
+      setFinalWpm(nextWpm);
       setIsFinished(true);
     }
   };
 
   const progress = calculateProgress(userInput.length, targetText.length);
-  const wpm = calculateWpm(userInput.length, elapsedMs);
+  const wpm = finalWpm ?? calculateWpm(userInput.length, elapsedMs);
+  const remainingSeconds = finishDeadline && now !== null
+    ? Math.max(0, Math.ceil((finishDeadline - now) / 1000))
+    : null;
   const players = Object.values(room.players || {});
 
   return (
@@ -67,6 +86,13 @@ export default function Race({ room, race }) {
     >
       <div className="mx-auto w-full max-w-4xl space-y-6">
         <header className="text-center">
+          <button
+            type="button"
+            onClick={onLeaveRoom}
+            className="mb-4 rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
+          >
+            Voltar à tela inicial
+          </button>
           <p className="text-sm font-bold tracking-widest text-sky-400">
             CORRIDA EM ANDAMENTO · SALA {room.code}
           </p>
@@ -87,6 +113,33 @@ export default function Race({ room, race }) {
             <strong className="text-xl">{progress}%</strong>
           </p>
         </section>
+
+        {remainingSeconds !== null && (
+          <section className="flex flex-wrap items-center justify-center gap-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-center">
+            <p>
+              <span className="block text-xs uppercase text-amber-200">
+                Tempo para concluir
+              </span>
+              <strong className="text-xl tabular-nums text-amber-300">
+                {Math.floor(remainingSeconds / 60)}:
+                {String(remainingSeconds % 60).padStart(2, '0')}
+              </strong>
+            </p>
+            {isHost && (
+              <button
+                type="button"
+                onClick={() =>
+                  socket.emit('extend_race_timer', {
+                    roomCode: race.roomCode || room.code,
+                  })
+                }
+                className="rounded-lg bg-amber-500 px-4 py-2 font-bold text-slate-950 transition hover:bg-amber-400"
+              >
+                Adicionar 10 segundos
+              </button>
+            )}
+          </section>
+        )}
 
         <RaceTrack players={players} />
 

@@ -41,14 +41,19 @@ function LobbyHeader() {
   );
 }
 
-export default function Lobby({ onRoomDataChange, initialMessage = '' }) {
+export default function Lobby({
+  initialRoom = null,
+  onRoomDataChange,
+  onLeaveRoom,
+  initialMessage = '',
+}) {
   const [playerName, setPlayerName] = useState('');
   const [roomCodeInput, setRoomCodeInput] = useState('');
-  const [currentRoom, setCurrentRoom] = useState(null);
+  const [currentRoom, setCurrentRoom] = useState(initialRoom);
   const [errorMessage, setErrorMessage] = useState(initialMessage);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const currentRoomRef = useRef(null);
+  const currentRoomRef = useRef(initialRoom);
 
   useEffect(() => {
     const setRoom = (room) => {
@@ -99,7 +104,7 @@ export default function Lobby({ onRoomDataChange, initialMessage = '' }) {
     };
     const handleRoomClosed = (message) => {
       setRoom(null);
-      setErrorMessage(message || 'A sala foi encerrada pelo professor.');
+      setErrorMessage(message || 'A sala foi encerrada pelo dono da sala.');
     };
 
     socket.on('room_created', handleRoomJoined);
@@ -183,6 +188,12 @@ export default function Lobby({ onRoomDataChange, initialMessage = '' }) {
     });
   };
 
+  const handleLeaveRoom = () => {
+    currentRoomRef.current = null;
+    setCurrentRoom(null);
+    onLeaveRoom?.();
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
       <ToastAlert message={errorMessage} onClose={() => setErrorMessage('')} />
@@ -200,6 +211,7 @@ export default function Lobby({ onRoomDataChange, initialMessage = '' }) {
           socketId={socket.id}
           onStartRace={handleStartRace}
           onCustomizationChange={handleCustomizationChange}
+          onLeaveRoom={handleLeaveRoom}
         />
       ) : (
         <LobbyEntry

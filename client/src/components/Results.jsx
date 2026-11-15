@@ -1,7 +1,7 @@
 import socket from '../services/socket';
 import { formatRaceTime, getRandomRaceText } from '../utils/gamePresentation';
 
-export default function Results({ room }) {
+export default function Results({ room, onLeaveRoom }) {
   const isHost = room.hostId === socket.id;
   const results = room.results || [];
 
@@ -48,7 +48,7 @@ export default function Results({ room }) {
                 {player.name}
                 {player.id === room.hostId && (
                   <span className="ml-2 text-xs font-normal text-amber-300">
-                    Professor
+                    Dono da sala
                   </span>
                 )}
               </span>
@@ -76,9 +76,30 @@ export default function Results({ room }) {
           </button>
         ) : (
           <p className="rounded-lg border border-dashed border-slate-700 px-4 py-3 text-center text-sm text-slate-400">
-            Aguardando o professor iniciar outra partida...
+            Aguardando o dono da sala iniciar outra partida...
           </p>
         )}
+        {isHost && (
+          <button
+            type="button"
+            onClick={() =>
+              socket.emit('return_to_lobby', {
+                roomCode: room.code,
+                targetText: getRandomRaceText(room.targetText),
+              })
+            }
+            className="w-full rounded-xl border border-sky-500/50 px-5 py-3 font-bold text-sky-300 transition hover:bg-sky-500/10"
+          >
+            Voltar ao lobby
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onLeaveRoom}
+          className="w-full rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
+        >
+          Voltar à tela inicial
+        </button>
       </section>
     </main>
   );
