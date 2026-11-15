@@ -24,4 +24,7 @@ npm run dev
 
 Quando o primeiro jogador termina uma corrida, começa uma contagem de 30
 segundos para os demais. O dono da sala pode acrescentar 10 segundos por vez.
-Quando todos terminam ou o prazo acaba, a classificação é exibida.
+Quando todos terminam ou o prazo acaba, a classificação é exibida. Ao iniciar
+uma corrida, todos veem uma contagem sincronizada de 3 segundos. Na sala de
+espera, qualquer participante pode copiar o link de entrada; ao abri-lo, o
+código da sala já vem preenchido e basta informar um apelido para entrar.

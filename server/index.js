@@ -20,6 +20,7 @@ const io = new Server(server, {
 
 const rooms = {};
 const DEFAULT_TEXT = "Programar todos os dias melhora sua lógica e velocidade.";
+const RACE_START_COUNTDOWN_MS = 3_000;
 const FINISH_COUNTDOWN_MS = 30_000;
 const FINISH_TIME_EXTENSION_MS = 10_000;
 const VEHICLE_EMOJIS = new Set([
@@ -110,6 +111,13 @@ function clearFinishTimer(room) {
   room.finishDeadline = null;
 }
 
+function clearStartCountdown(room) {
+  if (room.countdownTimeout) clearTimeout(room.countdownTimeout);
+  room.countdownTimeout = null;
+  room.countdownDeadline = null;
+  room.countdownTargetText = null;
+}
+
 function finishRace(room) {
   if (room.status !== "racing") return;
 
@@ -155,6 +163,7 @@ function finishRaceIfReady(room) {
 }
 
 function startRace(room, targetText) {
+  clearStartCountdown(room);
   clearFinishTimer(room);
   room.status = "racing";
   room.targetText = cleanTargetText(targetText, room.targetText);
@@ -177,6 +186,23 @@ function startRace(room, targetText) {
   });
 }
 
+function startRaceCountdown(room, targetText) {
+  clearStartCountdown(room);
+  room.status = "countdown";
+  room.countdownTargetText = cleanTargetText(targetText, room.targetText);
+  room.countdownDeadline = Date.now() + RACE_START_COUNTDOWN_MS;
+  room.countdownTimeout = setTimeout(
+    () => startRace(room, room.countdownTargetText),
+    RACE_START_COUNTDOWN_MS,
+  );
+
+  io.to(room.code).emit("race_countdown", {
+    roomCode: room.code,
+    targetText: room.countdownTargetText,
+    deadlineAt: room.countdownDeadline,
+  });
+}
+
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
@@ -191,6 +217,9 @@ io.on("connection", (socket) => {
       code: roomCode,
       hostId: socket.id,
       status: "waiting",
+      countdownDeadline: null,
+      countdownTargetText: null,
+      countdownTimeout: null,
       finishDeadline: null,
       finishTimeout: null,
       targetText: cleanTargetText(data.targetText),
@@ -289,7 +318,7 @@ io.on("connection", (socket) => {
       return;
     }
 
-    startRace(room, data.targetText);
+    startRaceCountdown(room, data.targetText);
   });
 
   socket.on("send_progress", (data = {}) => {
@@ -368,7 +397,7 @@ io.on("connection", (socket) => {
       return;
     }
 
-    startRace(room, data.targetText);
+    startRaceCountdown(room, data.targetText);
   });
 
   socket.on("return_to_lobby", (data = {}) => {
@@ -413,6 +442,7 @@ io.on("connection", (socket) => {
         "room_closed",
         "O dono da sala saiu. A sala foi encerrada.",
       );
+      clearStartCountdown(room);
       clearFinishTimer(room);
       delete rooms[roomCode];
       socket.leave(roomCode);
@@ -427,6 +457,7 @@ io.on("connection", (socket) => {
     });
 
     if (Object.keys(room.players).length === 0) {
+      clearStartCountdown(room);
       clearFinishTimer(room);
       delete rooms[roomCode];
       return;
@@ -448,6 +479,7 @@ io.on("connection", (socket) => {
         "room_closed",
         "O dono da sala desconectou. A sala foi encerrada.",
       );
+      clearStartCountdown(room);
       clearFinishTimer(room);
       delete rooms[room.code];
       console.log(`Room closed by host: ${room.code}`);
@@ -461,6 +493,7 @@ io.on("connection", (socket) => {
     });
 
     if (Object.keys(room.players).length === 0) {
+      clearStartCountdown(room);
       clearFinishTimer(room);
       delete rooms[room.code];
       console.log(`Room deleted: ${room.code}`);

@@ -1,6 +1,7 @@
 export default function LobbyEntry({
   playerName,
   roomCode,
+  isRoomCodeFromLink,
   isBusy,
   onPlayerNameChange,
   onRoomCodeChange,
@@ -25,6 +26,7 @@ export default function LobbyEntry({
           placeholder="Ex.: Ayrton"
           maxLength={18}
           autoComplete="nickname"
+          autoFocus={isRoomCodeFromLink}
           className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 outline-none transition focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
         />
       </div>
@@ -51,7 +53,9 @@ export default function LobbyEntry({
           <div>
             <h3 className="font-semibold text-slate-100">Entrar em uma sala</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Digite o código de 5 caracteres compartilhado pelo dono da sala.
+              {isRoomCodeFromLink
+                ? 'Informe seu apelido; o código da sala já veio preenchido pelo link.'
+                : 'Digite o código de 5 caracteres compartilhado pelo dono da sala.'}
             </p>
           </div>
           <form onSubmit={onJoinRoom} className="space-y-3">

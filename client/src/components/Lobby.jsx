@@ -47,12 +47,17 @@ export default function Lobby({
   onLeaveRoom,
   initialMessage = '',
 }) {
+  const roomCodeFromLink =
+    new URLSearchParams(window.location.search).get('roomCode')?.trim() || '';
   const [playerName, setPlayerName] = useState('');
-  const [roomCodeInput, setRoomCodeInput] = useState('');
+  const [roomCodeInput, setRoomCodeInput] = useState(() =>
+    roomCodeFromLink.toUpperCase(),
+  );
   const [currentRoom, setCurrentRoom] = useState(initialRoom);
   const [errorMessage, setErrorMessage] = useState(initialMessage);
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [roomLinkCopied, setRoomLinkCopied] = useState(false);
   const currentRoomRef = useRef(initialRoom);
 
   useEffect(() => {
@@ -66,6 +71,7 @@ export default function Lobby({
       setRoom(room || { code: roomCode });
       setErrorMessage('');
       setIsSubmitting(false);
+      setRoomLinkCopied(false);
     };
 
     const handlePlayerJoined = ({ room }) => {
@@ -180,6 +186,26 @@ export default function Lobby({
     });
   };
 
+  const handleCopyRoomLink = async () => {
+    if (!currentRoom?.code) return;
+
+    const roomUrl = new URL(window.location.href);
+    roomUrl.search = '';
+    roomUrl.hash = '';
+    roomUrl.searchParams.set('roomCode', currentRoom.code);
+
+    try {
+      await navigator.clipboard.writeText(roomUrl.toString());
+      setRoomLinkCopied(true);
+      setErrorMessage('');
+    } catch {
+      setRoomLinkCopied(false);
+      setErrorMessage(
+        `Não foi possível copiar o link. Compartilhe o código ${currentRoom.code}.`,
+      );
+    }
+  };
+
   const handleStartRace = () => {
     if (!currentRoom?.code) return;
     socket.emit('start_race', {
@@ -191,6 +217,7 @@ export default function Lobby({
   const handleLeaveRoom = () => {
     currentRoomRef.current = null;
     setCurrentRoom(null);
+    setRoomLinkCopied(false);
     onLeaveRoom?.();
   };
 
@@ -212,11 +239,14 @@ export default function Lobby({
           onStartRace={handleStartRace}
           onCustomizationChange={handleCustomizationChange}
           onLeaveRoom={handleLeaveRoom}
+          onCopyRoomLink={handleCopyRoomLink}
+          roomLinkCopied={roomLinkCopied}
         />
       ) : (
         <LobbyEntry
           playerName={playerName}
           roomCode={roomCodeInput}
+          isRoomCodeFromLink={Boolean(roomCodeFromLink)}
           isBusy={!isConnected || isSubmitting}
           onPlayerNameChange={setPlayerName}
           onRoomCodeChange={setRoomCodeInput}

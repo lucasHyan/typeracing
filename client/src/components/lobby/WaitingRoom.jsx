@@ -41,6 +41,8 @@ export default function WaitingRoom({
   onStartRace,
   onCustomizationChange,
   onLeaveRoom,
+  onCopyRoomLink,
+  roomLinkCopied,
 }) {
   const players = Object.values(room.players || {});
   const isHost = room.hostId === socketId;
@@ -60,6 +62,21 @@ export default function WaitingRoom({
           {players.length} {players.length === 1 ? 'jogador' : 'jogadores'}
         </span>
       </header>
+
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={onCopyRoomLink}
+          className="w-full rounded-xl border border-sky-500/50 px-4 py-3 font-semibold text-sky-300 transition hover:bg-sky-500/10"
+        >
+          {roomLinkCopied ? 'Link copiado!' : 'Copiar link para entrar na sala'}
+        </button>
+        {roomLinkCopied && (
+          <p role="status" className="text-center text-sm text-emerald-400">
+            Compartilhe o link para os jogadores entrarem sem digitar o código.
+          </p>
+        )}
+      </div>
 
       <PlayerList players={players} hostId={room.hostId} socketId={socketId} />
 

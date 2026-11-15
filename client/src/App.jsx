@@ -5,6 +5,47 @@ import Results from './components/Results.jsx';
 import socket from './services/socket.js';
 import { playersById } from './utils/gamePresentation.js';
 
+function RaceCountdown({ room, onLeaveRoom }) {
+  const [now, setNow] = useState(null);
+
+  useEffect(() => {
+    const updateNow = () => setNow(Date.now());
+    updateNow();
+    const intervalId = setInterval(updateNow, 100);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const remainingSeconds =
+    now === null
+      ? 3
+      : Math.max(0, Math.ceil((room.countdownDeadline - now) / 1000));
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
+      <section className="w-full max-w-lg space-y-6 rounded-2xl border border-slate-800 bg-slate-900/90 p-8 text-center shadow-2xl">
+        <p className="text-sm font-bold tracking-widest text-sky-400">
+          SALA {room.code}
+        </p>
+        <h1 className="text-2xl font-extrabold">Prepare-se!</h1>
+        <p className="text-slate-400">A corrida começa em</p>
+        <p
+          aria-live="polite"
+          className="text-8xl font-black tabular-nums text-emerald-400"
+        >
+          {remainingSeconds || 'JÁ!'}
+        </p>
+        <button
+          type="button"
+          onClick={onLeaveRoom}
+          className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
+        >
+          Voltar à tela inicial
+        </button>
+      </section>
+    </main>
+  );
+}
+
 function App() {
   const [room, setRoom] = useState(null);
   const [race, setRace] = useState(null);
@@ -32,6 +73,7 @@ function App() {
               code: data.roomCode || currentRoom.code,
               status: 'racing',
               targetText: data.targetText,
+              countdownDeadline: null,
               finishDeadline: null,
               players: data.players
                 ? playersById(data.players)
@@ -45,6 +87,21 @@ function App() {
         startTime: data.startTime,
       });
       setRoomMessage('');
+    };
+
+    const handleRaceCountdown = (data) => {
+      setRoom((currentRoom) =>
+        currentRoom?.code === data.roomCode
+          ? {
+              ...currentRoom,
+              status: 'countdown',
+              targetText: data.targetText,
+              countdownDeadline: data.deadlineAt,
+              finishDeadline: null,
+            }
+          : currentRoom,
+      );
+      setRace(null);
     };
 
     const handlePlayersUpdated = (data) => {
@@ -84,7 +141,11 @@ function App() {
     };
 
     const handleRoomLobby = (data) => {
-      setRoom({ ...data.room, finishDeadline: null });
+      setRoom({
+        ...data.room,
+        countdownDeadline: null,
+        finishDeadline: null,
+      });
       setRace(null);
     };
 
@@ -101,6 +162,7 @@ function App() {
     };
 
     socket.on('race_started', handleRaceStarted);
+    socket.on('race_countdown', handleRaceCountdown);
     socket.on('update_players', handlePlayersUpdated);
     socket.on('race_timer', handleRaceTimer);
     socket.on('race_finished', handleRaceFinished);
@@ -110,6 +172,7 @@ function App() {
 
     return () => {
       socket.off('race_started', handleRaceStarted);
+      socket.off('race_countdown', handleRaceCountdown);
       socket.off('update_players', handlePlayersUpdated);
       socket.off('race_timer', handleRaceTimer);
       socket.off('race_finished', handleRaceFinished);
@@ -118,6 +181,10 @@ function App() {
       socket.off('disconnect', handleDisconnect);
     };
   }, []);
+
+  if (room?.status === 'countdown') {
+    return <RaceCountdown room={room} onLeaveRoom={handleLeaveRoom} />;
+  }
 
   if (room?.status === 'racing' && race) {
     return <Race room={room} race={race} onLeaveRoom={handleLeaveRoom} />;
