@@ -55,10 +55,52 @@ function getRoomPlayerList(room) {
   return Object.values(room.players);
 }
 
+function getPublicPlayer(player) {
+  const publicPlayer = { ...player };
+  delete publicPlayer.socketId;
+  return publicPlayer;
+}
+
+function getPublicPlayerList(room) {
+  return getRoomPlayerList(room).map(getPublicPlayer);
+}
+
 function findPlayerRoom(playerId) {
   return Object.values(rooms).find((room) =>
     Object.hasOwn(room.players, playerId),
   );
+}
+
+function getSocketPlayer(socket, room) {
+  const player = room?.players[socket.data.playerId];
+  return player?.socketId === socket.id ? player : null;
+}
+
+function getRoomSnapshot(room) {
+  const players = Object.fromEntries(
+    Object.entries(room.players).map(([playerId, player]) => [
+      playerId,
+      getPublicPlayer(player),
+    ]),
+  );
+
+  return {
+    code: room.code,
+    hostId: room.hostId,
+    status: room.status,
+    countdownSeconds: room.countdownSeconds,
+    countdownTargetText: room.countdownTargetText,
+    finishSecondsRemaining: room.finishSecondsRemaining,
+    targetText: room.targetText,
+    startedAt: room.startedAt,
+    players,
+    results: room.results,
+  };
+}
+
+function isValidPlayerId(playerId) {
+  return typeof playerId === "string" &&
+    /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(playerId);
 }
 
 function cleanPlayerName(value, fallback) {
@@ -78,13 +120,15 @@ function cleanTargetText(value, fallback = DEFAULT_TEXT) {
     : fallback;
 }
 
-function createPlayer(id, name, color) {
+function createPlayer(id, name, color, socketId) {
   return {
     id,
     name,
     color,
+    socketId,
     emoji: "🚗",
     progress: 0,
+    input: "",
     wpm: 0,
     errors: 0,
     isFinished: false,
@@ -104,7 +148,10 @@ function getResults(room) {
       }
       return second.progress - first.progress || second.wpm - first.wpm;
     })
-    .map((player, index) => ({ ...player, place: index + 1 }));
+    .map((player, index) => ({
+      ...getPublicPlayer(player),
+      place: index + 1,
+    }));
 }
 
 function clearFinishTimer(room) {
@@ -129,7 +176,7 @@ function finishRace(room) {
   room.results = getResults(room);
   io.to(room.code).emit("race_finished", {
     roomCode: room.code,
-    players: getRoomPlayerList(room),
+    players: getPublicPlayerList(room),
     results: room.results,
   });
 }
@@ -181,6 +228,7 @@ function startRace(room, targetText) {
 
   Object.values(room.players).forEach((player) => {
     player.progress = 0;
+    player.input = "";
     player.wpm = 0;
     player.errors = 0;
     player.isFinished = false;
@@ -192,7 +240,7 @@ function startRace(room, targetText) {
     roomCode: room.code,
     targetText: room.targetText,
     startTime: room.startedAt,
-    players: getRoomPlayerList(room),
+    players: getPublicPlayerList(room),
   });
 }
 
@@ -225,8 +273,42 @@ function startRaceCountdown(room, targetText) {
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
+  socket.on("reconnect_player", (data = {}) => {
+    const playerId = data.playerId;
+    if (!isValidPlayerId(playerId)) return;
+
+    const room = findPlayerRoom(playerId);
+    if (!room) return;
+
+    const player = room.players[playerId];
+    if (player.socketId && player.socketId !== socket.id) {
+      const previousSocket = io.sockets.sockets.get(player.socketId);
+      if (previousSocket) {
+        previousSocket.leave(room.code);
+        previousSocket.data.playerId = null;
+      }
+    }
+
+    socket.data.playerId = playerId;
+    player.socketId = socket.id;
+    socket.join(room.code);
+    socket.emit("player_reconnected", {
+      roomCode: room.code,
+      room: getRoomSnapshot(room),
+    });
+    io.to(room.code).emit("update_players", {
+      roomCode: room.code,
+      players: getPublicPlayerList(room),
+    });
+  });
+
   socket.on("create_room", (data = {}) => {
-    if (findPlayerRoom(socket.id)) {
+    const playerId = data.playerId;
+    if (!isValidPlayerId(playerId)) {
+      socket.emit("error_message", "A identificação do jogador é inválida.");
+      return;
+    }
+    if (findPlayerRoom(playerId)) {
       socket.emit("error_message", "Você já está em uma sala.");
       return;
     }
@@ -234,7 +316,7 @@ io.on("connection", (socket) => {
     const roomCode = generateRoomCode();
     const room = {
       code: roomCode,
-      hostId: socket.id,
+      hostId: playerId,
       status: "waiting",
       countdownSeconds: null,
       countdownTargetText: null,
@@ -244,25 +326,32 @@ io.on("connection", (socket) => {
       finishSecondsRemaining: null,
       targetText: cleanTargetText(data.targetText),
       players: {
-        [socket.id]: createPlayer(
-          socket.id,
+        [playerId]: createPlayer(
+          playerId,
           cleanPlayerName(data.playerName, "Dono da sala"),
           cleanColor(data.carColor, "#2563eb"),
+          socket.id,
         ),
       },
       results: [],
     };
 
+    socket.data.playerId = playerId;
     rooms[roomCode] = room;
     socket.join(roomCode);
-    socket.emit("room_created", { roomCode, room });
+    socket.emit("room_created", { roomCode, room: getRoomSnapshot(room) });
   });
 
   socket.on("join_room", (data = {}) => {
     const roomCode = String(data.roomCode || "").trim().toUpperCase();
     const room = rooms[roomCode];
+    const playerId = data.playerId;
 
-    if (findPlayerRoom(socket.id)) {
+    if (!isValidPlayerId(playerId)) {
+      socket.emit("error_message", "A identificação do jogador é inválida.");
+      return;
+    }
+    if (findPlayerRoom(playerId)) {
       socket.emit("error_message", "Você já está em uma sala.");
       return;
     }
@@ -275,21 +364,26 @@ io.on("connection", (socket) => {
       return;
     }
 
-    room.players[socket.id] = createPlayer(
-      socket.id,
+    room.players[playerId] = createPlayer(
+      playerId,
       cleanPlayerName(data.playerName, "Jogador"),
       cleanColor(data.carColor, "#dc2626"),
+      socket.id,
     );
 
+    socket.data.playerId = playerId;
     socket.join(roomCode);
-    socket.emit("joined_successfully", { roomCode, room });
-    io.to(roomCode).emit("player_joined", { room });
+    socket.emit("joined_successfully", {
+      roomCode,
+      room: getRoomSnapshot(room),
+    });
+    io.to(roomCode).emit("player_joined", { room: getRoomSnapshot(room) });
   });
 
   socket.on("update_player_customization", (data = {}) => {
     const roomCode = String(data.roomCode || "").trim().toUpperCase();
     const room = rooms[roomCode];
-    const player = room?.players[socket.id];
+    const player = getSocketPlayer(socket, room);
 
     if (!room || room.status !== "waiting" || !player) {
       socket.emit(
@@ -318,7 +412,9 @@ io.on("connection", (socket) => {
     if (data.color !== undefined) player.color = data.color;
     if (data.emoji !== undefined) player.emoji = data.emoji;
 
-    io.to(roomCode).emit("player_customization_updated", { room });
+    io.to(roomCode).emit("player_customization_updated", {
+      room: getRoomSnapshot(room),
+    });
   });
 
   socket.on("start_race", (data = {}) => {
@@ -329,7 +425,7 @@ io.on("connection", (socket) => {
       socket.emit("error_message", "Sala não encontrada.");
       return;
     }
-    if (room.hostId !== socket.id) {
+    if (room.hostId !== socket.data.playerId || !getSocketPlayer(socket, room)) {
       socket.emit("error_message", "Somente o dono da sala pode iniciar a corrida.");
       return;
     }
@@ -346,7 +442,7 @@ io.on("connection", (socket) => {
       .trim()
       .toUpperCase();
     const room = rooms[roomCode];
-    const player = room?.players[socket.id];
+    const player = getSocketPlayer(socket, room);
 
     if (!room || room.status !== "racing" || !player || player.isFinished) {
       return;
@@ -361,6 +457,7 @@ io.on("connection", (socket) => {
       100,
       Math.round((input.length / room.targetText.length) * 100),
     );
+    player.input = input;
     player.wpm = Math.round((input.length / 5) / (elapsedMs / 60000));
     if (Number.isSafeInteger(data.errors) && data.errors >= 0) {
       player.errors = data.errors;
@@ -374,7 +471,10 @@ io.on("connection", (socket) => {
     }
 
     const players = getRoomPlayerList(room);
-    io.to(roomCode).emit("update_players", { roomCode, players });
+    io.to(roomCode).emit("update_players", {
+      roomCode,
+      players: getPublicPlayerList(room),
+    });
     finishRaceIfReady(room);
   });
 
@@ -382,11 +482,11 @@ io.on("connection", (socket) => {
     const roomCode = String(data.roomCode || "").trim().toUpperCase();
     const room = rooms[roomCode];
 
-    if (!room || !room.players[socket.id]) {
+    if (!room || !getSocketPlayer(socket, room)) {
       socket.emit("error_message", "Você não está nesta sala.");
       return;
     }
-    if (room.hostId !== socket.id) {
+    if (room.hostId !== socket.data.playerId) {
       socket.emit("error_message", "Somente o dono da sala pode aumentar o tempo.");
       return;
     }
@@ -411,7 +511,7 @@ io.on("connection", (socket) => {
       socket.emit("error_message", "Sala não encontrada.");
       return;
     }
-    if (room.hostId !== socket.id) {
+    if (room.hostId !== socket.data.playerId || !getSocketPlayer(socket, room)) {
       socket.emit("error_message", "Somente o dono da sala pode iniciar outra partida.");
       return;
     }
@@ -427,11 +527,11 @@ io.on("connection", (socket) => {
     const roomCode = String(data.roomCode || "").trim().toUpperCase();
     const room = rooms[roomCode];
 
-    if (!room || !room.players[socket.id]) {
+    if (!room || !getSocketPlayer(socket, room)) {
       socket.emit("error_message", "Você não está nesta sala.");
       return;
     }
-    if (room.hostId !== socket.id) {
+    if (room.hostId !== socket.data.playerId) {
       socket.emit("error_message", "Somente o dono da sala pode voltar ao lobby.");
       return;
     }
@@ -445,6 +545,7 @@ io.on("connection", (socket) => {
     room.results = [];
     Object.values(room.players).forEach((player) => {
       player.progress = 0;
+      player.input = "";
       player.wpm = 0;
       player.errors = 0;
       player.isFinished = false;
@@ -452,16 +553,17 @@ io.on("connection", (socket) => {
       player.finishTime = null;
     });
 
-    io.to(roomCode).emit("room_lobby", { room });
+    io.to(roomCode).emit("room_lobby", { room: getRoomSnapshot(room) });
   });
 
   socket.on("leave_room", (data = {}) => {
     const roomCode = String(data.roomCode || "").trim().toUpperCase();
     const room = rooms[roomCode];
 
-    if (!room || !room.players[socket.id]) return;
+    const playerId = socket.data.playerId;
+    if (!room || !getSocketPlayer(socket, room)) return;
 
-    if (room.hostId === socket.id) {
+    if (room.hostId === playerId) {
       io.to(roomCode).emit(
         "room_closed",
         "O dono da sala saiu. A sala foi encerrada.",
@@ -473,11 +575,11 @@ io.on("connection", (socket) => {
       return;
     }
 
-    delete room.players[socket.id];
+    delete room.players[playerId];
     socket.leave(roomCode);
     io.to(roomCode).emit("update_players", {
       roomCode,
-      players: getRoomPlayerList(room),
+      players: getPublicPlayerList(room),
     });
 
     if (Object.keys(room.players).length === 0) {
@@ -491,41 +593,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    const room = findPlayerRoom(socket.id);
-
-    if (!room) {
-      console.log(`Client disconnected: ${socket.id}`);
-      return;
-    }
-
-    if (room.hostId === socket.id) {
-      io.to(room.code).emit(
-        "room_closed",
-        "O dono da sala desconectou. A sala foi encerrada.",
-      );
-      clearStartCountdown(room);
-      clearFinishTimer(room);
-      delete rooms[room.code];
-      console.log(`Room closed by host: ${room.code}`);
-      return;
-    }
-
-    delete room.players[socket.id];
-    io.to(room.code).emit("update_players", {
-      roomCode: room.code,
-      players: getRoomPlayerList(room),
-    });
-
-    if (Object.keys(room.players).length === 0) {
-      clearStartCountdown(room);
-      clearFinishTimer(room);
-      delete rooms[room.code];
-      console.log(`Room deleted: ${room.code}`);
-      return;
-    }
-
-    finishRaceIfReady(room);
-    console.log(`Client disconnected from room: ${room.code}`);
+    console.log(`Client disconnected: ${socket.id}`);
   });
 });
 

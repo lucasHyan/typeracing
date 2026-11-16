@@ -9,18 +9,24 @@ import {
 } from './typingUtils';
 import socket from '../services/socket';
 import { formatRaceTime } from '../utils/gamePresentation';
+import { getPlayerId } from '../utils/playerIdentity';
 
 export default function Race({ room, race, onLeaveRoom }) {
   const targetText = race.targetText || room.targetText;
-  const [userInput, setUserInput] = useState('');
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const [isFinished, setIsFinished] = useState(false);
-  const [finalWpm, setFinalWpm] = useState(null);
-  const [errorCount, setErrorCount] = useState(0);
+  const currentPlayer = room.players?.[getPlayerId()];
+  const [userInput, setUserInput] = useState(currentPlayer?.input || '');
+  const [elapsedMs, setElapsedMs] = useState(currentPlayer?.elapsedMs ?? 0);
+  const [isFinished, setIsFinished] = useState(
+    currentPlayer?.isFinished || false,
+  );
+  const [finalWpm, setFinalWpm] = useState(
+    currentPlayer?.isFinished ? currentPlayer.wpm : null,
+  );
+  const [errorCount, setErrorCount] = useState(currentPlayer?.errors || 0);
   const screenRef = useRef(null);
-  const errorCountRef = useRef(0);
+  const errorCountRef = useRef(currentPlayer?.errors || 0);
   const startTime = race.startTime;
-  const isHost = room.hostId === socket.id;
+  const isHost = room.hostId === getPlayerId();
 
   useEffect(() => {
     const updateElapsedTime = () => {

@@ -28,3 +28,7 @@ Quando todos terminam ou o prazo acaba, a classificação é exibida. Ao iniciar
 uma corrida, todos veem uma contagem sincronizada de 3 segundos. Na sala de
 espera, qualquer participante pode copiar o link de entrada; ao abri-lo, o
 código da sala já vem preenchido e basta informar um apelido para entrar.
+O jogador também pode recarregar a página ou reconectar durante a espera ou uma
+corrida: sua identidade, sala, personalização e progresso são recuperados enquanto
+o servidor mantiver a sala ativa. A identificação fica salva no `sessionStorage`
+da aba atual e sair da sala encerra essa retomada.

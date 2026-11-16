@@ -1,6 +1,6 @@
 import VehicleCustomizer from './VehicleCustomizer';
 
-function PlayerList({ players, hostId, socketId }) {
+function PlayerList({ players, hostId, playerId }) {
   return (
     <section className="space-y-3">
       <h3 className="text-sm font-semibold text-slate-300">Pilotos conectados</h3>
@@ -18,7 +18,7 @@ function PlayerList({ players, hostId, socketId }) {
               />
               <span className="truncate font-medium text-slate-200">
                 {player.name}
-                {player.id === socketId && (
+                {player.id === playerId && (
                   <span className="ml-1 text-xs text-sky-400">(Você)</span>
                 )}
               </span>
@@ -37,7 +37,7 @@ function PlayerList({ players, hostId, socketId }) {
 
 export default function WaitingRoom({
   room,
-  socketId,
+  playerId,
   onStartRace,
   onCustomizationChange,
   onLeaveRoom,
@@ -45,8 +45,8 @@ export default function WaitingRoom({
   roomLinkCopied,
 }) {
   const players = Object.values(room.players || {});
-  const isHost = room.hostId === socketId;
-  const currentPlayer = room.players?.[socketId];
+  const isHost = room.hostId === playerId;
+  const currentPlayer = room.players?.[playerId];
 
   return (
     <section className="w-full max-w-xl space-y-6 rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl sm:p-8">
@@ -78,7 +78,7 @@ export default function WaitingRoom({
         )}
       </div>
 
-      <PlayerList players={players} hostId={room.hostId} socketId={socketId} />
+      <PlayerList players={players} hostId={room.hostId} playerId={playerId} />
 
       {currentPlayer && (
         <VehicleCustomizer player={currentPlayer} onChange={onCustomizationChange} />

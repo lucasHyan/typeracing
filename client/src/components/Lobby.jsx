@@ -4,6 +4,7 @@ import {
   getRandomRaceText,
   playersById,
 } from '../utils/gamePresentation';
+import { getPlayerId } from '../utils/playerIdentity';
 import LobbyEntry from './lobby/LobbyEntry';
 import WaitingRoom from './lobby/WaitingRoom';
 
@@ -74,6 +75,10 @@ export default function Lobby({
       setRoomLinkCopied(false);
     };
 
+    const handlePlayerReconnected = ({ room }) => {
+      if (room) setRoom(room);
+    };
+
     const handlePlayerJoined = ({ room }) => {
       if (room) setRoom(room);
     };
@@ -115,6 +120,7 @@ export default function Lobby({
 
     socket.on('room_created', handleRoomJoined);
     socket.on('joined_successfully', handleRoomJoined);
+    socket.on('player_reconnected', handlePlayerReconnected);
     socket.on('player_joined', handlePlayerJoined);
     socket.on('update_players', handlePlayersUpdated);
     socket.on('player_customization_updated', handlePlayerJoined);
@@ -127,6 +133,7 @@ export default function Lobby({
     return () => {
       socket.off('room_created', handleRoomJoined);
       socket.off('joined_successfully', handleRoomJoined);
+      socket.off('player_reconnected', handlePlayerReconnected);
       socket.off('player_joined', handlePlayerJoined);
       socket.off('update_players', handlePlayersUpdated);
       socket.off('player_customization_updated', handlePlayerJoined);
@@ -154,6 +161,7 @@ export default function Lobby({
 
     setIsSubmitting(true);
     socket.emit('create_room', {
+      playerId: getPlayerId(),
       playerName: name,
       targetText: getRandomRaceText(),
     });
@@ -175,7 +183,11 @@ export default function Lobby({
     if (!isConnected || isSubmitting) return;
 
     setIsSubmitting(true);
-    socket.emit('join_room', { roomCode, playerName: name });
+    socket.emit('join_room', {
+      roomCode,
+      playerId: getPlayerId(),
+      playerName: name,
+    });
   };
 
   const handleCustomizationChange = (customization) => {
@@ -235,7 +247,7 @@ export default function Lobby({
       {currentRoom ? (
         <WaitingRoom
           room={currentRoom}
-          socketId={socket.id}
+          playerId={getPlayerId()}
           onStartRace={handleStartRace}
           onCustomizationChange={handleCustomizationChange}
           onLeaveRoom={handleLeaveRoom}

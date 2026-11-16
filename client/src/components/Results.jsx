@@ -1,8 +1,9 @@
-import socket from '../services/socket';
 import { formatRaceTime, getRandomRaceText } from '../utils/gamePresentation';
+import socket from '../services/socket';
+import { getPlayerId } from '../utils/playerIdentity';
 
 export default function Results({ room, onLeaveRoom }) {
-  const isHost = room.hostId === socket.id;
+  const isHost = room.hostId === getPlayerId();
   const results = room.results || [];
 
   const handleStartAnotherRace = () => {
