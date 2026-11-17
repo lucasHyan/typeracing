@@ -13,7 +13,7 @@
 | Desenvolvimento | 07/11/2026 | 07/11/2026 | 4,0 | Implementação da Parte 2 e 3 do MVP: comparador caractere a caractere (verde/vermelho), cálculo de PPM em tempo real, pista de corrida com avatar e modularização de componentes | N | https://github.com/lucasHyan/typeracing/commit/f2ed970 | Lucas Hyan | Sessão das 15:00 às 19:00. Construção da validação visual instantânea, cronômetro de PPM em tempo real, renderização responsiva do carrinho na pista e extração de submódulos. |
 | Desenvolvimento | 08/11/2026 | 08/11/2026 | 2,5 | Criação do repositório de frases educativas em JSON (paragrafos.json) com conteúdos de lógica e programação para a Ctrl+Play e rotina de sorteio aleatório | N | https://github.com/lucasHyan/typeracing/commit/da50ff5 | Lucas Hyan | Bloco 1 (13:20 às 15:50). Estruturação do banco local de frases contextualizadas em português e seleção dinâmica ao iniciar ou reiniciar cada partida. |
 | Desenvolvimento | 08/11/2026 | 08/11/2026 | 2,7 | Finalização do modo Single Player: calibração do PPM, trava flexível de erro na palavra, animação de tremor (shake) e refatoração modular para Clean Code | N | https://github.com/lucasHyan/typeracing/commit/ba6a42b | Lucas Hyan | Bloco 2 (17:40 às 20:22). Isolamento das regras de validação em typingUtils.js e animações em animations.js, padronizando o código em inglês técnico e mantendo a interface em português. |
-| Requisitos | 09/11/2026 | 09/11/2026 | 1,0 | Alinhamento pedagógico e operacional com a coordenação da Ctrl+Play Vila Ré via WhatsApp para validação temática e solicitação de agenda para o teste piloto presencial | S | https://docs.google.com/document/d/1yURsbpE2Qp9_54O5V9HYyZbhOFmqY8k209iaQLL8r5I/edit?tab=t.e0wndrjicr3w | Lucas Hyan | Sessão das 17:00 às 18:00. Apresentação dos avanços do MVP Single Player e solicitação de disponibilidade de sábado para o primeiro encontro presencial (aguardando confirmação de data pelo coordenador). |
+| Requisitos | 09/11/2026 | 09/11/2026 | 1,0 | Alinhamento pedagógico e operacional com a coordenação da Ctrl+Play Vila Ré via WhatsApp para validação temática e solicitação de agenda para o teste piloto presencial | S | https://docs.google.com/document/d/1yURsbpE2Qp9_54O5V9HYyZbhOFmqY8k209iaQLL8r5I/edit?tab=t.e0wndrjicr3w | Lucas Hyan | Sessão das 17:00 às 18:00. Apresentação dos avanços do MVP Single Player e solicitação de disponibilidade de sábado para o primeiro encontro presencial na unidade Vila Ré. |
 | Desenvolvimento | 10/11/2026 | 10/11/2026 | 2,0 | Inicialização do projeto backend em Node.js (`/server`), instalação das dependências Express, Socket.io e CORS e configuração da instância cliente `socket.io-client` | N | https://github.com/lucasHyan/typeracing/tree/main/server | Lucas Hyan | Bloco 1 (18:30 às 20:30). Preparação da arquitetura servidor/cliente em inglês técnico e configuração de conexão WebSocket na porta 4000. |
 | Desenvolvimento | 10/11/2026 | 11/11/2026 | 3,5 | Implementação do servidor autoritativo em memória RAM (`server/index.js`) com eventos de sala e preparação inicial do lobby multiplayer | N | https://github.com/lucasHyan/typeracing/commit/93ffebd | Lucas Hyan | Bloco 2 noturno/madrugada (21:00 de 10/11 às 00:30 de 11/11). Desenvolvimento dos eventos `create_room`, `join_room`, `start_race`, `send_progress` e `disconnect`. |
 | Desenvolvimento | 11/11/2026 | 12/11/2026 | 4,0 | Refatoração e organização modular dos componentes e estilos do multiplayer: divisão do Lobby em subcomponentes menores e centralização dos utilitários de apresentação da corrida | N | https://github.com/lucasHyan/typeracing/commit/83d76d5 | Lucas Hyan | Sessão noturna/madrugada (21:13 de 11/11 às 01:13 de 12/11). Padronização visual da interface, remoção de estilos legados do template e manutenção do fluxo multiplayer. |
@@ -23,25 +23,28 @@
 | Desenvolvimento | 14/11/2026 | 14/11/2026 | 3,0 | Implementação de botões de retorno (tela inicial e lobby), congelamento de cronômetro/PPM final ao concluir o texto, ampliação das frases com acentos e `ç` e atualização do `README.md` | N | https://github.com/lucasHyan/typeracing/commit/ed8264c | Lucas Hyan | Bloco 1 (14:00 às 17:00). Melhoria do fluxo de navegação entre partidas sem necessidade de recarregar a página e adequação ortográfica completa das frases em português. |
 | Desenvolvimento | 14/11/2026 | 14/11/2026 | 1,5 | Implementação de link direto compartilhável para ingresso rápido na sala e contagem regressiva (`countdown`) sincronizada antes da largada | N | https://github.com/lucasHyan/typeracing/commit/c060337 | Lucas Hyan | Bloco 2 (17:30 às 19:00). Facilitação do acesso dos alunos via URL direta com código da sala e adição de temporizador visual pré-corrida. |
 | Testes | 14/11/2026 | 14/11/2026 | 1,5 | Testes funcionais multi-abas em ambiente de produção e correção de sincronização na contagem regressiva inicial e no contabilizador de erros de digitação | N | https://github.com/lucasHyan/typeracing/commit/4e6c80f | Lucas Hyan | Bloco 3 (19:30 às 21:00). Validação de build/lint e ajuste fino na contagem regressiva e no registro preciso de erros durante a corrida. |
+| Desenvolvimento | 15/11/2026 | 15/11/2026 | 1,5 | Implementação de reconexão automática de jogador utilizando `sessionStorage` para tolerância a quedas de conexão em rede escolar | N | https://github.com/lucasHyan/typeracing/commit/72ee813 | Lucas Hyan | Sessão das 20:00 às 21:30. Atendimento à recomendação técnica do orientador garantindo retorno automático do aluno à corrida após recarregamento ou oscilação de Wi-Fi. |
+| Testes | 16/11/2026 | 16/11/2026 | 1,0 | Bateria de testes funcionais multi-abas em ambiente de produção (Vercel + Render) com múltiplos participantes simultâneos e análise de logs WebSocket | N | https://docs.google.com/document/d/1yURsbpE2Qp9_54O5V9HYyZbhOFmqY8k209iaQLL8r5I/edit#16-11-testes | Lucas Hyan | Sessão das 19:00 às 20:00. Validação de estabilidade das salas em memória RAM, sincronização de corrida, reconexão de sessão e registros em tempo real no painel do Render. |
+| Requisitos | 16/11/2026 | 16/11/2026 | 0,5 | Alinhamento via WhatsApp com a coordenação da Ctrl+Play Vila Ré para agendamento da primeira visita presencial e teste piloto em sala de aula | S | https://docs.google.com/document/d/1yURsbpE2Qp9_54O5V9HYyZbhOFmqY8k209iaQLL8r5I/edit#16-11-alinhamento | Lucas Hyan | Sessão das 20:00 às 20:30. Coordenação da visita presencial e aplicação piloto do protótipo multiplayer agendada para sábado, 28/11/2026, nos minutos iniciais/finais da aula. |
 
-**TOTAL DE HORAS DECLARADAS:** 43,0 h
+**TOTAL DE HORAS DECLARADAS:** 46,0 h
 
 ### Resumo por etapa
 | Etapa | Horas | % do total |
 | :--- | :--- | :--- |
 | Prospecção | 0 | 0% |
-| Requisitos | 7,5 | 17,5% |
-| Planejamento/design | 5,3 | 12,3% |
-| Desenvolvimento | 25,2 | 58,6% |
-| Testes | 1,5 | 3,5% |
-| Entrega/implantação | 2,5 | 5,8% |
+| Requisitos | 8,0 | 17,4% |
+| Planejamento/design | 5,3 | 11,5% |
+| Desenvolvimento | 26,7 | 58,0% |
+| Testes | 2,5 | 5,4% |
+| Entrega/implantação | 2,5 | 5,4% |
 | Treinamento | 0 | 0% |
-| Documentação | 1,0 | 2,3% |
-| **Total** | **43,0** | **100%** |
+| Documentação | 1,0 | 2,2% |
+| **Total** | **46,0** | **100%** |
 
 ### Resumo de encontros com o cliente (presenciais ou síncronos)
-- **Horas em encontros com o cliente:** 2,0 h
-- **Nº de encontros com o cliente:** 2
+- **Horas em encontros com o cliente:** 2,5 h
+- **Nº de encontros com o cliente:** 3
 
 ### Orientações de preenchimento
 1. Uma linha por sessão (datas × atividade). Sessões abaixo de 15 min não precisam entrar.
