@@ -67,7 +67,7 @@ export default function LobbyEntry({
             type="text"
             value={playerName}
             onChange={(event) => onPlayerNameChange(event.target.value)}
-            placeholder="Seu apelido (Ex.: Ayrton)"
+            placeholder="Seu apelido"
             maxLength={18}
             autoComplete="nickname"
             autoFocus={isRoomCodeFromLink}
@@ -119,7 +119,7 @@ export default function LobbyEntry({
             onChange={(event) =>
               onRoomCodeChange(event.target.value.toUpperCase())
             }
-            placeholder="A8F2K"
+            placeholder=""
             maxLength={5}
             autoComplete="off"
             className="w-32 py-2.5 px-3 text-center uppercase tracking-widest font-bold text-[#1E242B] bg-white rounded-xl shadow-sm outline-none"
