@@ -55,7 +55,7 @@ export default function LobbyEntry({
           Pronto para acelerar no teclado?
         </h1>
         <p className="mt-2 text-base text-center text-[#64748B]">
-          Escolha seu piloto e entre na pista com a turma.
+          Escolha seu piloto e entre na pista.
         </p>
 
         <div className="mt-10 bg-white rounded-2xl shadow-md max-w-2xl w-full mx-auto p-2.5 pl-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
@@ -110,7 +110,7 @@ export default function LobbyEntry({
           className="mt-6 flex items-center justify-center gap-3 flex-wrap sm:flex-nowrap"
         >
           <label htmlFor="room-code" className="text-sm text-[#64748B]">
-            Ou entre com o código da lousa:
+            Ou entre com um código:
           </label>
           <input
             id="room-code"
