@@ -1,85 +1,146 @@
+import { useState } from "react";
+
 export default function LobbyEntry({
   playerName,
   roomCode,
   isRoomCodeFromLink,
   isBusy,
+  isConnected,
   onPlayerNameChange,
   onRoomCodeChange,
   onCreateRoom,
   onJoinRoom,
+  onSoloMode,
 }) {
-  return (
-    <section className="w-full max-w-2xl space-y-8 rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl sm:p-8">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-200">Identificação do piloto</h2>
-        <label
-          htmlFor="player-name"
-          className="mb-2 mt-4 block text-sm font-medium text-slate-400"
-        >
-          Apelido
-        </label>
-        <input
-          id="player-name"
-          type="text"
-          value={playerName}
-          onChange={(event) => onPlayerNameChange(event.target.value)}
-          placeholder="Ex.: Ayrton"
-          maxLength={18}
-          autoComplete="nickname"
-          autoFocus={isRoomCodeFromLink}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 outline-none transition focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-        />
-      </div>
+  const colorOptions = [
+    { name: "Vermelho", value: "#FF6B2B" },
+    { name: "Azul", value: "#00A8E8" },
+    { name: "Amarelo", value: "#FFB703" },
+    { name: "Verde", value: "#16A34A" },
+    { name: "Roxo", value: "#9B5DE5" },
+  ];
+  const [selectedColor, setSelectedColor] = useState(colorOptions[0].value);
 
-      <div className="grid grid-cols-1 gap-8 border-t border-slate-700 pt-6 md:grid-cols-2">
-        <section className="flex flex-col justify-between gap-4">
-          <div>
-            <h3 className="font-semibold text-slate-100">Criar uma sala</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              Crie uma sala e compartilhe o código com os jogadores.
-            </p>
+  return (
+    <main className="min-h-screen w-full bg-[#FFF8F0] px-4 text-[#1E242B] sm:px-6">
+      <header className="mx-auto h-24 px-8 max-w-6xl flex items-center justify-between">
+        <div className="flex items-center gap-3.5 text-2xl font-extrabold tracking-tight">
+{/*
+  <img
+    src="/logo_small.png"
+    alt=""
+    className="w-22 h-22 object-contain"
+  />
+  */}
+          <span>
+            Type<span className="text-[#FF6B2B]">Racing</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-sm font-semibold">
+          <span
+            className={`h-2 w-2 rounded-full ${isConnected ? "bg-[#16A34A]" : "bg-[#FFB703]"}`}
+          />
+          {isConnected ? "Servidor Online" : "Conectando..."}
+        </div>
+      </header>
+
+      <section className="mx-auto flex w-full max-w-6xl flex-col items-center pt-10 sm:pt-12">
+        <img
+          src="/logo.png"
+          alt="Emblema TypeRacing"
+          className="w-42 h-42 object-contain mx-auto"
+        />
+
+        <h1 className="mt-5 text-4xl text-center font-extrabold text-[#1E242B]">
+          Pronto para acelerar no teclado?
+        </h1>
+        <p className="mt-2 text-base text-center text-[#64748B]">
+          Escolha seu piloto e entre na pista.
+        </p>
+
+        <div className="mt-10 bg-white rounded-2xl shadow-md max-w-2xl w-full mx-auto p-2.5 pl-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          <label htmlFor="player-name" className="sr-only">
+            Seu apelido
+          </label>
+          <input
+            id="player-name"
+            type="text"
+            value={playerName}
+            onChange={(event) => onPlayerNameChange(event.target.value)}
+            placeholder="Seu apelido"
+            maxLength={18}
+            autoComplete="nickname"
+            autoFocus={isRoomCodeFromLink}
+            className="flex-1 outline-none text-[#1E242B] placeholder:text-slate-400 min-w-0 px-1 py-3"
+          />
+
+          <div
+            className="flex items-center justify-center gap-2.5"
+            aria-label="Cores do piloto"
+          >
+            {colorOptions.map((color) => {
+              const isSelected = selectedColor === color.value;
+              return (
+                <button
+                  key={color.name}
+                  type="button"
+                  title={color.name}
+                  aria-label={color.name}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedColor(color.value)}
+                  className={`h-5 w-5 shrink-0 rounded-full border-2 border-white transition ${isSelected ? "ring-2 ring-[#1E242B] ring-offset-2" : "ring-0"}`}
+                  style={{ backgroundColor: color.value }}
+                />
+              );
+            })}
           </div>
+
           <button
             type="button"
             onClick={onCreateRoom}
             disabled={isBusy}
-            className="w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="px-7 py-3 rounded-xl font-bold text-white shrink-0 bg-[#FF6B2B] transition hover:bg-[#E55A1F] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isBusy ? 'Conectando...' : 'Criar sala'}
+            {isBusy ? "Conectando..." : "Criar Sala"}
           </button>
-        </section>
+        </div>
 
-        <section className="flex flex-col justify-between gap-4">
-          <div>
-            <h3 className="font-semibold text-slate-100">Entrar em uma sala</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              {isRoomCodeFromLink
-                ? 'Informe seu apelido; o código da sala já veio preenchido pelo link.'
-                : 'Digite o código de 5 caracteres compartilhado pelo dono da sala.'}
-            </p>
-          </div>
-          <form onSubmit={onJoinRoom} className="space-y-3">
-            <label htmlFor="room-code" className="sr-only">Código da sala</label>
-            <input
-              id="room-code"
-              type="text"
-              value={roomCode}
-              onChange={(event) => onRoomCodeChange(event.target.value.toUpperCase())}
-              placeholder="CÓDIGO"
-              maxLength={5}
-              autoComplete="off"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-center font-mono font-bold tracking-widest text-sky-400 placeholder-slate-600 outline-none transition focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-            />
-            <button
-              type="submit"
-              disabled={isBusy}
-              className="w-full rounded-lg bg-slate-800 px-5 py-3 font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isBusy ? 'Conectando...' : 'Entrar na sala'}
-            </button>
-          </form>
-        </section>
-      </div>
-    </section>
+        <form
+          onSubmit={onJoinRoom}
+          className="mt-6 flex items-center justify-center gap-3 flex-wrap sm:flex-nowrap"
+        >
+          <label htmlFor="room-code" className="text-sm text-[#64748B]">
+            Ou entre com um código:
+          </label>
+          <input
+            id="room-code"
+            type="text"
+            value={roomCode}
+            onChange={(event) =>
+              onRoomCodeChange(event.target.value.toUpperCase())
+            }
+            placeholder=""
+            maxLength={5}
+            autoComplete="off"
+            className="w-32 py-2.5 px-3 text-center uppercase tracking-widest font-bold text-[#1E242B] bg-white rounded-xl shadow-sm outline-none"
+          />
+          <button
+            type="submit"
+            disabled={isBusy}
+            className="px-6 py-2.5 rounded-xl font-bold text-white bg-[#00A8E8] transition hover:bg-[#0090C7] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Entrar
+          </button>
+        </form>
+
+        <button
+          type="button"
+          onClick={onSoloMode}
+          className="mt-10 text-center text-sm font-medium text-[#64748B] hover:text-[#1E242B] transition"
+        >
+          Treinar no Modo Solo →
+        </button>
+      </section>
+    </main>
   );
 }
