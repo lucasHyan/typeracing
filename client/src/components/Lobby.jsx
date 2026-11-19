@@ -3,6 +3,7 @@ import socket from "../services/socket";
 import { getRandomRaceText, playersById } from "../utils/gamePresentation";
 import { getPlayerId } from "../utils/playerIdentity";
 import LobbyEntry from "./lobby/LobbyEntry";
+import { COLOR_PRESETS } from "./lobby/constants";
 import WaitingRoom from "./lobby/WaitingRoom";
 import Typing from "./typing";
 
@@ -24,19 +25,6 @@ function ToastAlert({ message, onClose }) {
         ✕
       </button>
     </div>
-  );
-}
-
-function LobbyHeader() {
-  return (
-    <header className="mb-8 text-center">
-      <h1 className="text-4xl font-extrabold tracking-tight text-sky-400">
-        TypeRacing
-      </h1>
-      <p className="mt-2 text-sm text-slate-400">
-        Desafie seus amigos em uma corrida de digitação em tempo real
-      </p>
-    </header>
   );
 }
 
@@ -163,6 +151,7 @@ export default function Lobby({
       playerId: getPlayerId(),
       playerName: name,
       targetText: getRandomRaceText(),
+      carColor: COLOR_PRESETS[0].value,
     });
   };
 
@@ -186,6 +175,7 @@ export default function Lobby({
       roomCode,
       playerId: getPlayerId(),
       playerName: name,
+      carColor: COLOR_PRESETS[1].value,
     });
   };
 
@@ -247,18 +237,16 @@ export default function Lobby({
           <Typing />
         </main>
       ) : currentRoom ? (
-        <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
-          <LobbyHeader />
-          <WaitingRoom
-            room={currentRoom}
-            playerId={getPlayerId()}
-            onStartRace={handleStartRace}
-            onCustomizationChange={handleCustomizationChange}
-            onLeaveRoom={handleLeaveRoom}
-            onCopyRoomLink={handleCopyRoomLink}
-            roomLinkCopied={roomLinkCopied}
-          />
-        </main>
+        <WaitingRoom
+          room={currentRoom}
+          playerId={getPlayerId()}
+          isConnected={isConnected}
+          onStartRace={handleStartRace}
+          onCustomizationChange={handleCustomizationChange}
+          onLeaveRoom={handleLeaveRoom}
+          onCopyRoomLink={handleCopyRoomLink}
+          roomLinkCopied={roomLinkCopied}
+        />
       ) : (
         <LobbyEntry
           playerName={playerName}

@@ -1,8 +1,9 @@
 export const COLOR_PRESETS = [
-  { name: 'Azul', value: '#2563eb' },
-  { name: 'Vermelho', value: '#dc2626' },
-  { name: 'Verde', value: '#16a34a' },
-  { name: 'Amarelo', value: '#eab308' },
+  { name: 'Laranja', value: '#FF6B2B' },
+  { name: 'Ciano', value: '#00A8E8' },
+  { name: 'Amarelo', value: '#FFB000' },
+  { name: 'Verde', value: '#16A34A' },
+  { name: 'Roxo', value: '#A855F7' },
 ];
 
 export const VEHICLE_EMOJIS = ['🚗', '🏎️', '🚙', '🚕', '🚓', '🚑', '🚒', '🚜', '🛵', '🚀'];
