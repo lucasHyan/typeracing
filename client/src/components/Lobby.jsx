@@ -5,7 +5,7 @@ import { getPlayerId } from "../utils/playerIdentity";
 import LobbyEntry from "./lobby/LobbyEntry";
 import { COLOR_PRESETS } from "./lobby/constants";
 import WaitingRoom from "./lobby/WaitingRoom";
-import Typing from "./typing";
+import TypingPage from "../pages/TypingPage.jsx";
 
 function ToastAlert({ message, onClose }) {
   if (!message) return null;
@@ -234,7 +234,7 @@ export default function Lobby({
           >
             Voltar à tela inicial
           </button>
-          <Typing />
+          <TypingPage />
         </main>
       ) : currentRoom ? (
         <WaitingRoom

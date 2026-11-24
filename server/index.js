@@ -99,8 +99,10 @@ function getRoomSnapshot(room) {
 }
 
 function isValidPlayerId(playerId) {
-  return typeof playerId === "string" &&
-    /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(playerId);
+  return (
+    typeof playerId === "string" &&
+    /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(playerId)
+  );
 }
 
 function cleanPlayerName(value, fallback) {
@@ -343,7 +345,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join_room", (data = {}) => {
-    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
     const room = rooms[roomCode];
     const playerId = data.playerId;
 
@@ -381,7 +385,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("update_player_customization", (data = {}) => {
-    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
     const room = rooms[roomCode];
     const player = getSocketPlayer(socket, room);
 
@@ -418,15 +424,23 @@ io.on("connection", (socket) => {
   });
 
   socket.on("start_race", (data = {}) => {
-    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
     const room = rooms[roomCode];
 
     if (!room) {
       socket.emit("error_message", "Sala não encontrada.");
       return;
     }
-    if (room.hostId !== socket.data.playerId || !getSocketPlayer(socket, room)) {
-      socket.emit("error_message", "Somente o dono da sala pode iniciar a corrida.");
+    if (
+      room.hostId !== socket.data.playerId ||
+      !getSocketPlayer(socket, room)
+    ) {
+      socket.emit(
+        "error_message",
+        "Somente o dono da sala pode iniciar a corrida.",
+      );
       return;
     }
     if (room.status !== "waiting") {
@@ -458,7 +472,7 @@ io.on("connection", (socket) => {
       Math.round((input.length / room.targetText.length) * 100),
     );
     player.input = input;
-    player.wpm = Math.round((input.length / 5) / (elapsedMs / 60000));
+    player.wpm = Math.round(input.length / 5 / (elapsedMs / 60000));
     if (Number.isSafeInteger(data.errors) && data.errors >= 0) {
       player.errors = data.errors;
     }
@@ -479,7 +493,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("extend_race_timer", (data = {}) => {
-    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
     const room = rooms[roomCode];
 
     if (!room || !getSocketPlayer(socket, room)) {
@@ -487,7 +503,10 @@ io.on("connection", (socket) => {
       return;
     }
     if (room.hostId !== socket.data.playerId) {
-      socket.emit("error_message", "Somente o dono da sala pode aumentar o tempo.");
+      socket.emit(
+        "error_message",
+        "Somente o dono da sala pode aumentar o tempo.",
+      );
       return;
     }
     if (room.status !== "racing" || !room.finishDeadline) {
@@ -504,15 +523,23 @@ io.on("connection", (socket) => {
   });
 
   socket.on("start_another_race", (data = {}) => {
-    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
     const room = rooms[roomCode];
 
     if (!room) {
       socket.emit("error_message", "Sala não encontrada.");
       return;
     }
-    if (room.hostId !== socket.data.playerId || !getSocketPlayer(socket, room)) {
-      socket.emit("error_message", "Somente o dono da sala pode iniciar outra partida.");
+    if (
+      room.hostId !== socket.data.playerId ||
+      !getSocketPlayer(socket, room)
+    ) {
+      socket.emit(
+        "error_message",
+        "Somente o dono da sala pode iniciar outra partida.",
+      );
       return;
     }
     if (room.status !== "finished") {
@@ -524,7 +551,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("return_to_lobby", (data = {}) => {
-    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
     const room = rooms[roomCode];
 
     if (!room || !getSocketPlayer(socket, room)) {
@@ -532,7 +561,10 @@ io.on("connection", (socket) => {
       return;
     }
     if (room.hostId !== socket.data.playerId) {
-      socket.emit("error_message", "Somente o dono da sala pode voltar ao lobby.");
+      socket.emit(
+        "error_message",
+        "Somente o dono da sala pode voltar ao lobby.",
+      );
       return;
     }
     if (room.status !== "finished") {
@@ -557,7 +589,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("leave_room", (data = {}) => {
-    const roomCode = String(data.roomCode || "").trim().toUpperCase();
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
     const room = rooms[roomCode];
 
     const playerId = socket.data.playerId;

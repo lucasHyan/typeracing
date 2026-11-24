@@ -25,20 +25,15 @@ export default function LobbyEntry({
     <main className="min-h-screen w-full bg-[#FFF8F0] px-4 text-[#1E242B] sm:px-6">
       <header className="mx-auto h-24 px-8 max-w-6xl flex items-center justify-between">
         <div className="flex items-center gap-3.5 text-2xl font-extrabold tracking-tight">
-{/*
-  <img
-    src="/logo_small.png"
-    alt=""
-    className="w-22 h-22 object-contain"
-  />
-  */}
           <span>
             Type<span className="text-[#FF6B2B]">Racing</span>
           </span>
         </div>
         <div className="flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-sm font-semibold">
           <span
-            className={`h-2 w-2 rounded-full ${isConnected ? "bg-[#16A34A]" : "bg-[#FFB703]"}`}
+            className={`h-2 w-2 rounded-full ${
+              isConnected ? "bg-[#16A34A]" : "bg-[#FFB703]"
+            }`}
           />
           {isConnected ? "Servidor Online" : "Conectando..."}
         </div>
@@ -88,7 +83,11 @@ export default function LobbyEntry({
                   aria-label={color.name}
                   aria-pressed={isSelected}
                   onClick={() => setSelectedColor(color.value)}
-                  className={`h-5 w-5 shrink-0 rounded-full border-2 border-white transition ${isSelected ? "ring-2 ring-[#1E242B] ring-offset-2" : "ring-0"}`}
+                  className={`h-5 w-5 shrink-0 rounded-full border-2 border-white transition ${
+                    isSelected
+                      ? "ring-2 ring-[#1E242B] ring-offset-2"
+                      : "ring-0"
+                  }`}
                   style={{ backgroundColor: color.value }}
                 />
               );

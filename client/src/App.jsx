@@ -1,42 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
-import Lobby from './components/Lobby.jsx';
-import Race from './components/Race.jsx';
-import Results from './components/Results.jsx';
-import socket from './services/socket.js';
-import { playersById } from './utils/gamePresentation.js';
-import { getPlayerId } from './utils/playerIdentity.js';
-
-function RaceCountdown({ room, onLeaveRoom }) {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
-      <section className="w-full max-w-lg space-y-6 rounded-2xl border border-slate-800 bg-slate-900/90 p-8 text-center shadow-2xl">
-        <p className="text-sm font-bold tracking-widest text-sky-400">
-          SALA {room.code}
-        </p>
-        <h1 className="text-2xl font-extrabold">Prepare-se!</h1>
-        <p className="text-slate-400">A corrida começa em</p>
-        <p
-          aria-live="polite"
-          className="text-8xl font-black tabular-nums text-emerald-400"
-        >
-          {room.countdownSeconds}
-        </p>
-        <button
-          type="button"
-          onClick={onLeaveRoom}
-          className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
-        >
-          Voltar à tela inicial
-        </button>
-      </section>
-    </main>
-  );
-}
+import { useCallback, useEffect, useState } from "react";
+import LobbyPage from "./pages/LobbyPage.jsx";
+import RacePage from "./pages/RacePage.jsx";
+import ResultsPage from "./pages/ResultsPage.jsx";
+import socket from "./services/socket.js";
+import { playersById } from "./utils/gamePresentation.js";
+import { getPlayerId } from "./utils/playerIdentity.js";
 
 function App() {
   const [room, setRoom] = useState(null);
   const [race, setRace] = useState(null);
-  const [roomMessage, setRoomMessage] = useState('');
+  const [roomMessage, setRoomMessage] = useState("");
 
   const handleRoomDataChange = useCallback((roomData) => {
     setRoom(roomData);
@@ -44,25 +17,25 @@ function App() {
 
   const handleLeaveRoom = useCallback(() => {
     if (room?.code) {
-      socket.emit('leave_room', { roomCode: room.code });
+      socket.emit("leave_room", { roomCode: room.code });
     }
-    sessionStorage.removeItem('typeracing-player-id');
+    sessionStorage.removeItem("typeracing-player-id");
     setRoom(null);
     setRace(null);
-    setRoomMessage('');
+    setRoomMessage("");
   }, [room]);
 
   useEffect(() => {
     const handleConnect = () => {
-      socket.emit('reconnect_player', { playerId: getPlayerId() });
+      socket.emit("reconnect_player", { playerId: getPlayerId() });
     };
 
     const handlePlayerReconnected = ({ room }) => {
       if (!room) return;
       setRoom(room);
-      setRoomMessage('');
+      setRoomMessage("");
       setRace(
-        room.status === 'racing'
+        room.status === "racing"
           ? {
               roomCode: room.code,
               targetText: room.targetText,
@@ -78,7 +51,7 @@ function App() {
           ? {
               ...currentRoom,
               code: data.roomCode || currentRoom.code,
-              status: 'racing',
+              status: "racing",
               targetText: data.targetText,
               countdownSeconds: null,
               finishDeadline: null,
@@ -94,7 +67,7 @@ function App() {
         targetText: data.targetText,
         startTime: data.startTime,
       });
-      setRoomMessage('');
+      setRoomMessage("");
     };
 
     const handleRaceCountdown = (data) => {
@@ -102,7 +75,7 @@ function App() {
         currentRoom?.code === data.roomCode
           ? {
               ...currentRoom,
-              status: 'countdown',
+              status: "countdown",
               targetText: data.targetText,
               countdownSeconds: data.secondsRemaining,
               finishDeadline: null,
@@ -141,7 +114,7 @@ function App() {
         currentRoom
           ? {
               ...currentRoom,
-              status: 'finished',
+              status: "finished",
               finishDeadline: null,
               finishSecondsRemaining: null,
               players: data.players
@@ -166,55 +139,66 @@ function App() {
     const handleRoomClosed = (message) => {
       setRoom(null);
       setRace(null);
-      setRoomMessage(message || 'A sala foi encerrada pelo anfitrião.');
+      setRoomMessage(message || "A sala foi encerrada pelo anfitrião.");
     };
 
     const handleDisconnect = () => {
       setRoom(null);
       setRace(null);
-      setRoomMessage('Conexão perdida. Entre novamente na sala.');
+      setRoomMessage("Conexão perdida. Entre novamente na sala.");
     };
 
-    socket.on('race_started', handleRaceStarted);
-    socket.on('race_countdown', handleRaceCountdown);
-    socket.on('update_players', handlePlayersUpdated);
-    socket.on('race_timer', handleRaceTimer);
-    socket.on('race_finished', handleRaceFinished);
-    socket.on('room_lobby', handleRoomLobby);
-    socket.on('player_reconnected', handlePlayerReconnected);
-    socket.on('room_closed', handleRoomClosed);
-    socket.on('disconnect', handleDisconnect);
-    socket.on('connect', handleConnect);
+    socket.on("race_started", handleRaceStarted);
+    socket.on("race_countdown", handleRaceCountdown);
+    socket.on("update_players", handlePlayersUpdated);
+    socket.on("race_timer", handleRaceTimer);
+    socket.on("race_finished", handleRaceFinished);
+    socket.on("room_lobby", handleRoomLobby);
+    socket.on("player_reconnected", handlePlayerReconnected);
+    socket.on("room_closed", handleRoomClosed);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect", handleConnect);
     if (socket.connected) handleConnect();
 
     return () => {
-      socket.off('race_started', handleRaceStarted);
-      socket.off('race_countdown', handleRaceCountdown);
-      socket.off('update_players', handlePlayersUpdated);
-      socket.off('race_timer', handleRaceTimer);
-      socket.off('race_finished', handleRaceFinished);
-      socket.off('room_lobby', handleRoomLobby);
-      socket.off('player_reconnected', handlePlayerReconnected);
-      socket.off('room_closed', handleRoomClosed);
-      socket.off('disconnect', handleDisconnect);
-      socket.off('connect', handleConnect);
+      socket.off("race_started", handleRaceStarted);
+      socket.off("race_countdown", handleRaceCountdown);
+      socket.off("update_players", handlePlayersUpdated);
+      socket.off("race_timer", handleRaceTimer);
+      socket.off("race_finished", handleRaceFinished);
+      socket.off("room_lobby", handleRoomLobby);
+      socket.off("player_reconnected", handlePlayerReconnected);
+      socket.off("room_closed", handleRoomClosed);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect", handleConnect);
     };
   }, []);
 
-  if (room?.status === 'countdown') {
-    return <RaceCountdown room={room} onLeaveRoom={handleLeaveRoom} />;
+  if (room?.status === "countdown") {
+    return (
+      <RacePage
+        room={room}
+        race={{
+          roomCode: room.code,
+          targetText: room.targetText,
+          startTime: null,
+        }}
+        countdownSeconds={room.countdownSeconds}
+        onLeaveRoom={handleLeaveRoom}
+      />
+    );
   }
 
-  if (room?.status === 'racing' && race) {
-    return <Race room={room} race={race} onLeaveRoom={handleLeaveRoom} />;
+  if (room?.status === "racing" && race) {
+    return <RacePage room={room} race={race} onLeaveRoom={handleLeaveRoom} />;
   }
 
-  if (room?.status === 'finished') {
-    return <Results room={room} onLeaveRoom={handleLeaveRoom} />;
+  if (room?.status === "finished") {
+    return <ResultsPage room={room} onLeaveRoom={handleLeaveRoom} />;
   }
 
   return (
-    <Lobby
+    <LobbyPage
       initialRoom={room}
       onRoomDataChange={handleRoomDataChange}
       onLeaveRoom={handleLeaveRoom}

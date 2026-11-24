@@ -2,41 +2,64 @@ export default function TypingArea({
   targetText,
   userInput,
   onInputChange,
-  isFinished
+  isFinished,
+  difficulty = "Intermediário",
 }) {
+  const hasError = targetText
+    .split("")
+    .slice(0, userInput.length)
+    .some((character, index) => character !== userInput[index]);
+
   return (
-    <div className="space-y-4">
-      <div
-        className="select-none rounded-lg border border-slate-700 bg-slate-950 p-4 text-left text-lg leading-relaxed sm:text-xl"
-      >
-        {targetText.split('').map((char, index) => {
-          let className = 'text-slate-500';
+    <section className="flex h-full flex-col rounded-2xl border border-[#E9DCCB] bg-white p-5 shadow-sm">
+      <div>
+        <h2 className="text-lg font-extrabold text-[#1E242B]">
+          Continue digitando
+        </h2>
+        <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#64748B]">
+          Trecho atual • {difficulty}
+        </p>
+      </div>
+
+      <div className="mt-4 select-none text-[19px] leading-[1.55] text-[#94A3B8] sm:text-xl">
+        {targetText.split("").map((character, index) => {
+          let className = "text-[#94A3B8]";
 
           if (index < userInput.length) {
-            const isCorrect = userInput[index] === char;
-            className = isCorrect
-              ? 'text-emerald-400'
-              : 'rounded-sm bg-red-500/20 text-red-300';
+            className =
+              userInput[index] === character
+                ? "text-[#16A34A]"
+                : "rounded-sm bg-[#FEE2E2] text-[#DC2626]";
+          } else if (index === userInput.length) {
+            className =
+              "rounded-sm bg-[#FFF1E8] text-[#FF6B2B] underline decoration-[#FF6B2B] decoration-2 underline-offset-2";
           }
 
           return (
-            <span key={index} className={className}>
-              {char}
+            <span key={`${character}-${index}`} className={className}>
+              {character}
             </span>
           );
         })}
       </div>
 
-      <textarea
-        rows={3}
-        value={userInput}
-        onChange={onInputChange}
-        disabled={isFinished}
-        maxLength={targetText.length}
-        placeholder={isFinished ? 'Corrida concluída!' : 'Comece a digitar o texto acima...'}
-        aria-label="Digite o texto da corrida"
-        className="min-h-28 w-full resize-y rounded-lg border border-slate-600 bg-slate-950 p-3 text-base text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 disabled:cursor-not-allowed disabled:opacity-70"
-      />
-    </div>
+      <div className="mt-auto pt-4">
+        <textarea
+          rows={1}
+          value={userInput}
+          onChange={onInputChange}
+          disabled={isFinished}
+          maxLength={targetText.length}
+          placeholder={isFinished ? "Corrida concluída!" : ""}
+          aria-label="Digite o texto da corrida"
+          className={`h-12 w-full resize-none rounded-xl border bg-white px-3 py-3 text-base text-[#1E242B] outline-none transition placeholder:text-slate-400 ${hasError ? "border-[#FF6B2B] ring-2 ring-[#FF6B2B]/10" : "border-[#FF6B2B] focus:ring-2 focus:ring-[#FF6B2B]/15"}`}
+        />
+        {hasError && (
+          <p className="mt-2 text-xs text-[#64748B]">
+            Continue de onde parou. Corrija a letra em vermelho.
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
