@@ -5,12 +5,15 @@ import { shakeElement } from "./animations";
 import { calculateProgress, calculateWpm, getInputUpdate } from "./typingUtils";
 import socket from "../services/socket";
 import { getPlayerId } from "../utils/playerIdentity.js";
+import ThemeToggle from "./ThemeToggle.jsx";
 
 export default function Race({
   room,
   race,
   countdownSeconds = null,
   onLeaveRoom,
+  theme = "light",
+  onToggleTheme,
 }) {
   const targetText = race?.targetText || room.targetText || "";
   const raceStartTime = race?.startTime || null;
@@ -111,7 +114,7 @@ export default function Race({
   return (
     <main
       ref={screenRef}
-      className="h-screen overflow-hidden bg-[#FFF8F0] px-4 py-3 text-[#1E242B] sm:px-6"
+      className="theme-main h-screen overflow-hidden px-4 py-3 sm:px-6"
     >
       <header className="mx-auto flex h-14 max-w-[1280px] items-center justify-between">
         <button
@@ -122,9 +125,12 @@ export default function Race({
         >
           Type<span className="text-[#FF6B2B]">Racing</span>
         </button>
-        <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold">
-          <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
-          Servidor Online
+        <div className="flex items-center gap-2">
+          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+          <div className="theme-card flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold">
+            <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
+            Servidor Online
+          </div>
         </div>
       </header>
 
@@ -139,7 +145,7 @@ export default function Race({
           <RaceTrack players={players} currentPlayerId={playerId} />
           {countdownSeconds !== null && countdownSeconds !== undefined && (
             <div
-              className="absolute inset-12 z-30 flex items-center justify-center rounded-2xl bg-[#FFF8F0]/35 backdrop-blur-[1px]"
+              className="absolute inset-12 z-30 flex items-center justify-center rounded-2xl bg-[var(--theme-background)]/35 backdrop-blur-[1px]"
               aria-live="polite"
             >
               <span className="grid h-24 w-24 place-items-center rounded-full border-4 border-white bg-[#FF6B2B] text-5xl font-black text-white shadow-xl">
@@ -161,7 +167,7 @@ export default function Race({
 
           <aside className="grid min-h-0 grid-rows-[86px_1fr] gap-4">
             <div className="grid grid-cols-2 gap-4">
-              <section className="grid place-items-center rounded-2xl border border-[#E9DCCB] bg-white px-3 text-center shadow-sm">
+              <section className="theme-card grid place-items-center rounded-2xl border px-3 text-center shadow-sm">
                 <div>
                   <strong className="block text-2xl font-extrabold">
                     {wpm} PPM
@@ -171,7 +177,7 @@ export default function Race({
                   </span>
                 </div>
               </section>
-              <section className="grid place-items-center rounded-2xl border border-[#E9DCCB] bg-white px-3 text-center shadow-sm">
+              <section className="theme-card grid place-items-center rounded-2xl border px-3 text-center shadow-sm">
                 <div>
                   <strong className="block text-2xl font-extrabold tabular-nums">
                     {elapsedTime}
@@ -183,7 +189,7 @@ export default function Race({
               </section>
             </div>
 
-            <section className="min-h-0 overflow-hidden rounded-2xl border border-[#E9DCCB] bg-white p-4 shadow-sm">
+            <section className="theme-card min-h-0 overflow-hidden rounded-2xl border p-4 shadow-sm">
               <h2 className="mb-3 text-base font-extrabold">Ranking ao Vivo</h2>
               <ol className="space-y-1">
                 {ranking.map((player, index) => {
@@ -211,7 +217,7 @@ export default function Race({
                 })}
               </ol>
               {remainingSeconds !== null && (
-                <div className="mt-3 flex items-center justify-between rounded-lg bg-[#FFF8F0] px-3 py-2">
+                <div className="theme-elevated mt-3 flex items-center justify-between rounded-lg px-3 py-2">
                   <span className="text-xs font-bold text-[#64748B]">
                     Encerrando em {remainingSeconds}s
                   </span>

@@ -22,11 +22,9 @@ export default function TypingArea({
     .some((character, index) => character !== userInput[index]);
 
   return (
-    <section className="flex h-full flex-col rounded-2xl border border-[#E9DCCB] bg-white p-5 shadow-sm">
+    <section className="theme-card flex h-full flex-col rounded-2xl border p-5 shadow-sm">
       <div>
-        <h2 className="text-lg font-extrabold text-[#1E242B]">
-          Continue digitando
-        </h2>
+        <h2 className="text-lg font-extrabold">Continue digitando</h2>
         <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#64748B]">
           Trecho atual • {difficulty}
         </p>
@@ -34,16 +32,15 @@ export default function TypingArea({
 
       <div className="mt-4 select-none text-[19px] leading-[1.55] text-[#94A3B8] sm:text-xl">
         {targetText.split("").map((character, index) => {
-          let className = "text-[#94A3B8]";
+          let className = "theme-pending";
 
           if (index < userInput.length) {
             className =
               userInput[index] === character
-                ? "text-[#16A34A]"
-                : "rounded-sm bg-[#FEE2E2] text-[#DC2626]";
+                ? "typing-correct"
+                : "typing-error";
           } else if (index === userInput.length) {
-            className =
-              "rounded-sm bg-[#FFF1E8] text-[#FF6B2B] underline decoration-[#FF6B2B] decoration-2 underline-offset-2";
+            className = "typing-pending";
           }
 
           return (
@@ -64,7 +61,7 @@ export default function TypingArea({
           maxLength={targetText.length}
           placeholder={isFinished ? "Corrida concluída!" : ""}
           aria-label="Digite o texto da corrida"
-          className={`h-12 w-full resize-none rounded-xl border bg-white px-3 py-3 text-base text-[#1E242B] outline-none transition placeholder:text-slate-400 ${hasError ? "border-[#FF6B2B] ring-2 ring-[#FF6B2B]/10" : "border-[#FF6B2B] focus:ring-2 focus:ring-[#FF6B2B]/15"}`}
+          className={`theme-input h-12 w-full resize-none rounded-xl border px-3 py-3 text-base outline-none transition placeholder:text-slate-400 ${hasError ? "border-[#F87171] ring-2 ring-[#F87171]/10" : "border-[#FF6B2B] focus:ring-2 focus:ring-[#FF6B2B]/15"}`}
         />
         {hasError && (
           <p className="mt-2 text-xs text-[#64748B]">

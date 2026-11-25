@@ -33,6 +33,8 @@ export default function Lobby({
   onRoomDataChange,
   onLeaveRoom,
   initialMessage = "",
+  theme = "light",
+  onToggleTheme,
 }) {
   const roomCodeFromLink =
     new URLSearchParams(window.location.search).get("roomCode")?.trim() || "";
@@ -256,6 +258,8 @@ export default function Lobby({
           onLeaveRoom={handleLeaveRoom}
           onCopyRoomLink={handleCopyRoomLink}
           roomLinkCopied={roomLinkCopied}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
         />
       ) : (
         <LobbyEntry
@@ -269,6 +273,8 @@ export default function Lobby({
           onCreateRoom={handleCreateRoom}
           onJoinRoom={handleJoinRoom}
           onSoloMode={() => setIsSoloMode(true)}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
         />
       )}
     </>

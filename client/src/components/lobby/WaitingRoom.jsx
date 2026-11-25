@@ -1,6 +1,7 @@
 import { useState } from "react";
 import VehicleCustomizer from "./VehicleCustomizer";
 import { COLOR_PRESETS } from "./constants";
+import ThemeToggle from "../ThemeToggle.jsx";
 
 function VehicleIcon({ color }) {
   return (
@@ -34,26 +35,31 @@ export default function WaitingRoom({
   onCopyRoomLink,
   roomLinkCopied,
   onDifficultyChange,
+  theme = "light",
+  onToggleTheme,
 }) {
   const players = Object.values(room.players || {});
   const isHost = room.hostId === playerId;
   const [difficulty, setDifficulty] = useState(room.difficulty || "Iniciante");
 
   return (
-    <main className="min-h-screen bg-[#FFF8F0] px-4 py-5 text-[#1E242B] sm:px-6 sm:py-7">
+    <main className="theme-main min-h-screen px-4 py-5 sm:px-6 sm:py-7">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between">
         <div className="text-xl font-extrabold tracking-tight text-[#1E242B]">
           Type
           <span className="text-[#FF6B2B]">Racing</span>
         </div>
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#EAF6EC] px-4 py-2 text-xs font-semibold text-[#277342]">
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              isConnected ? "bg-[#16A34A]" : "bg-amber-500"
-            }`}
-          />
-          {isConnected ? "Servidor Online" : "Conectando..."}
-        </span>
+        <div className="flex items-center gap-2">
+          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+          <span className="theme-card inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                isConnected ? "bg-[#16A34A]" : "bg-amber-500"
+              }`}
+            />
+            {isConnected ? "Servidor Online" : "Conectando..."}
+          </span>
+        </div>
       </header>
 
       <section className="mx-auto mt-12 w-full max-w-3xl space-y-7 pb-5">
@@ -66,7 +72,7 @@ export default function WaitingRoom({
           </p>
         </header>
 
-        <section className="grid gap-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center sm:px-7">
+        <section className="theme-card grid gap-6 rounded-2xl border p-6 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center sm:px-7">
           <div>
             <p className="text-[11px] font-bold tracking-[0.16em] text-slate-500">
               CÓDIGO DA SALA
@@ -89,7 +95,7 @@ export default function WaitingRoom({
                 <legend className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-500">
                   DIFICULDADE
                 </legend>
-                <div className="grid grid-cols-3 rounded-lg bg-[#F4F5F6] p-1">
+                <div className="theme-elevated grid grid-cols-3 rounded-lg p-1">
                   {["Iniciante", "Intermediário", "Programador"].map(
                     (option) => (
                       <button
@@ -103,8 +109,8 @@ export default function WaitingRoom({
                         aria-pressed={difficulty === option}
                         className={`cursor-pointer rounded-md px-2 py-2 text-xs font-semibold transition disabled:cursor-not-allowed sm:text-sm ${
                           difficulty === option
-                            ? "bg-white text-[#1E242B] shadow-sm"
-                            : "text-slate-500 hover:text-[#1E242B]"
+                            ? "theme-card shadow-sm"
+                            : "theme-secondary hover:opacity-80"
                         }`}
                       >
                         {option}
@@ -134,10 +140,8 @@ export default function WaitingRoom({
               return (
                 <li
                   key={player.id}
-                  className={`relative flex min-h-40 flex-col items-center rounded-2xl border bg-white px-3 pb-3 pt-3 shadow-sm ${
-                    isCurrentPlayer
-                      ? "border-2 border-[#FF6B2B]"
-                      : "border-slate-200/80"
+                  className={`theme-card relative flex min-h-40 flex-col items-center rounded-2xl border px-3 pb-3 pt-3 shadow-sm ${
+                    isCurrentPlayer ? "border-2 border-[#FF6B2B]" : ""
                   }`}
                 >
                   {isCurrentPlayer ? (

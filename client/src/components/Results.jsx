@@ -1,6 +1,7 @@
 import { getRandomRaceText } from "../utils/gamePresentation";
 import socket from "../services/socket";
 import { getPlayerId } from "../utils/playerIdentity";
+import ThemeToggle from "./ThemeToggle.jsx";
 
 function PodiumCar({ color }) {
   return (
@@ -24,7 +25,12 @@ function PodiumCar({ color }) {
   );
 }
 
-export default function Results({ room, onLeaveRoom }) {
+export default function Results({
+  room,
+  onLeaveRoom,
+  theme = "light",
+  onToggleTheme,
+}) {
   const isHost = room.hostId === getPlayerId();
   const results = [...(room.results || [])].sort((first, second) => {
     if (first.isFinished !== second.isFinished)
@@ -90,7 +96,7 @@ export default function Results({ room, onLeaveRoom }) {
           <PodiumCar color={player.color || "#2563eb"} />
         </div>
         <section
-          className={`relative flex w-full flex-col items-center justify-center rounded-2xl border text-center ${isFirst ? "h-56 border-[#FFB703] bg-[#FFB703]" : isSecond ? "h-44 border-slate-200 border-t-4 border-t-[#00A8E8] bg-white" : "h-36 border-slate-200 border-t-4 border-t-[#FF6B2B] bg-white"}`}
+          className={`relative flex w-full flex-col items-center justify-center rounded-2xl border text-center ${isFirst ? "h-56 border-[#FFB703] bg-[#FFB703] text-[#14181F]" : isSecond ? "theme-card h-44 border-t-4 border-t-[#00A8E8]" : "theme-card h-36 border-t-4 border-t-[#FF6B2B]"}`}
         >
           <span
             className={`absolute -top-5 grid h-11 w-11 place-items-center rounded-full border-4 border-white text-sm font-black ${isFirst ? "bg-[#FFF8F0] text-[#1E242B]" : "bg-[#FFF8F0] text-[#64748B]"}`}
@@ -98,12 +104,12 @@ export default function Results({ room, onLeaveRoom }) {
             {place}º
           </span>
           <p
-            className={`${isFirst ? "mt-1 text-lg" : "mt-2 text-sm"} font-extrabold text-[#1E242B]`}
+            className={`${isFirst ? "mt-1 text-lg" : "mt-2 text-sm"} font-extrabold ${isFirst ? "text-[#14181F]" : ""}`}
           >
             {player.name}
           </p>
           <strong
-            className={`${isFirst ? "mt-1 text-4xl" : "mt-2 text-2xl"} font-black text-[#1E242B]`}
+            className={`${isFirst ? "mt-1 text-4xl" : "mt-2 text-2xl"} font-black ${isFirst ? "text-[#14181F]" : ""}`}
           >
             {player.wpm || 0} PPM
           </strong>
@@ -133,7 +139,7 @@ export default function Results({ room, onLeaveRoom }) {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-[#FFF8F0] px-4 py-3 text-[#1E242B] sm:px-6">
+    <main className="theme-main h-screen overflow-hidden px-4 py-3 sm:px-6">
       <header className="mx-auto flex h-14 max-w-[1280px] items-center justify-between">
         <div className="flex items-center text-2xl font-extrabold tracking-tight">
           <img
@@ -145,9 +151,12 @@ export default function Results({ room, onLeaveRoom }) {
             Type<span className="text-[#FF6B2B]">Racing</span>
           </span>
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold">
-          <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
-          Servidor Online
+        <div className="flex items-center gap-2">
+          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+          <div className="theme-card flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold">
+            <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
+            Servidor Online
+          </div>
         </div>
       </header>
 
@@ -168,7 +177,7 @@ export default function Results({ room, onLeaveRoom }) {
         </section>
 
         {results.length >= 4 && (
-          <section className="mt-5 w-full rounded-2xl border border-[#E9DCCB] bg-white px-4 py-3">
+          <section className="theme-card mt-5 w-full rounded-2xl border px-4 py-3">
             {results.slice(3).map((player, index) => (
               <div
                 key={player.id}
@@ -200,7 +209,7 @@ export default function Results({ room, onLeaveRoom }) {
               <button
                 type="button"
                 onClick={handleExportCsv}
-                className="rounded-xl border-2 border-[#00A8E8] bg-white px-8 py-3.5 font-bold text-[#00A8E8] transition hover:bg-[#F0FAFF]"
+                className="theme-card rounded-xl border-2 border-[#00A8E8] px-8 py-3.5 font-bold text-[#00A8E8] transition hover:bg-[#28303B]"
               >
                 Exportar CSV
               </button>

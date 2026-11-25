@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ThemeToggle from "../ThemeToggle.jsx";
 
 export default function LobbyEntry({
   playerName,
@@ -11,6 +12,8 @@ export default function LobbyEntry({
   onCreateRoom,
   onJoinRoom,
   onSoloMode,
+  theme = "light",
+  onToggleTheme,
 }) {
   const colorOptions = [
     { name: "Vermelho", value: "#FF6B2B" },
@@ -22,20 +25,23 @@ export default function LobbyEntry({
   const [selectedColor, setSelectedColor] = useState(colorOptions[0].value);
 
   return (
-    <main className="min-h-screen w-full bg-[#FFF8F0] px-4 text-[#1E242B] sm:px-6">
+    <main className="theme-main min-h-screen w-full px-4 sm:px-6">
       <header className="mx-auto h-24 px-8 max-w-6xl flex items-center justify-between">
         <div className="flex items-center gap-3.5 text-2xl font-extrabold tracking-tight">
           <span>
             Type<span className="text-[#FF6B2B]">Racing</span>
           </span>
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-sm font-semibold">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              isConnected ? "bg-[#16A34A]" : "bg-[#FFB703]"
-            }`}
-          />
-          {isConnected ? "Servidor Online" : "Conectando..."}
+        <div className="flex items-center gap-2">
+          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+          <div className="theme-card flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold">
+            <span
+              className={`h-2 w-2 rounded-full ${
+                isConnected ? "bg-[#16A34A]" : "bg-[#FFB703]"
+              }`}
+            />
+            {isConnected ? "Servidor Online" : "Conectando..."}
+          </div>
         </div>
       </header>
 
@@ -46,14 +52,14 @@ export default function LobbyEntry({
           className="w-42 h-42 object-contain mx-auto"
         />
 
-        <h1 className="mt-5 text-4xl text-center font-extrabold text-[#1E242B]">
+        <h1 className="mt-5 text-4xl text-center font-extrabold">
           Pronto para acelerar no teclado?
         </h1>
-        <p className="mt-2 text-base text-center text-[#64748B]">
+        <p className="theme-secondary mt-2 text-base text-center">
           Escolha seu piloto e entre na pista.
         </p>
 
-        <div className="mt-10 bg-white rounded-2xl shadow-md max-w-2xl w-full mx-auto p-2.5 pl-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        <div className="theme-card mt-10 rounded-2xl border shadow-md max-w-2xl w-full mx-auto p-2.5 pl-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           <label htmlFor="player-name" className="sr-only">
             Seu apelido
           </label>
@@ -66,7 +72,7 @@ export default function LobbyEntry({
             maxLength={18}
             autoComplete="nickname"
             autoFocus={isRoomCodeFromLink}
-            className="flex-1 outline-none text-[#1E242B] placeholder:text-slate-400 min-w-0 px-1 py-3"
+            className="theme-input flex-1 outline-none placeholder:text-slate-400 min-w-0 px-1 py-3"
           />
 
           <div
@@ -108,7 +114,7 @@ export default function LobbyEntry({
           onSubmit={onJoinRoom}
           className="mt-6 flex items-center justify-center gap-3 flex-wrap sm:flex-nowrap"
         >
-          <label htmlFor="room-code" className="text-sm text-[#64748B]">
+          <label htmlFor="room-code" className="theme-secondary text-sm">
             Ou entre com um código:
           </label>
           <input
@@ -121,7 +127,7 @@ export default function LobbyEntry({
             placeholder=""
             maxLength={5}
             autoComplete="off"
-            className="w-32 py-2.5 px-3 text-center uppercase tracking-widest font-bold text-[#1E242B] bg-white rounded-xl shadow-sm outline-none"
+            className="theme-input w-32 py-2.5 px-3 text-center uppercase tracking-widest font-bold rounded-xl border shadow-sm outline-none"
           />
           <button
             type="submit"
@@ -135,7 +141,7 @@ export default function LobbyEntry({
         <button
           type="button"
           onClick={onSoloMode}
-          className="mt-10 text-center text-sm font-medium text-[#64748B] hover:text-[#1E242B] transition"
+          className="theme-secondary mt-10 text-center text-sm font-medium hover:opacity-80 transition"
         >
           Treinar no Modo Solo →
         </button>

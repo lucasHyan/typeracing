@@ -10,6 +10,18 @@ function App() {
   const [room, setRoom] = useState(null);
   const [race, setRace] = useState(null);
   const [roomMessage, setRoomMessage] = useState("");
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem("typeracing_theme") === "dark" ? "dark" : "light",
+  );
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("typeracing_theme", theme);
+  }, [theme]);
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  }, []);
 
   const handleRoomDataChange = useCallback((roomData) => {
     setRoom(roomData);
@@ -188,6 +200,8 @@ function App() {
         }}
         countdownSeconds={room.countdownSeconds}
         onLeaveRoom={handleLeaveRoom}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
     );
   }
@@ -199,12 +213,21 @@ function App() {
         room={room}
         race={race}
         onLeaveRoom={handleLeaveRoom}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
     );
   }
 
   if (room?.status === "finished") {
-    return <ResultsPage room={room} onLeaveRoom={handleLeaveRoom} />;
+    return (
+      <ResultsPage
+        room={room}
+        onLeaveRoom={handleLeaveRoom}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+      />
+    );
   }
 
   return (
@@ -213,6 +236,8 @@ function App() {
       onRoomDataChange={handleRoomDataChange}
       onLeaveRoom={handleLeaveRoom}
       initialMessage={roomMessage}
+      theme={theme}
+      onToggleTheme={handleToggleTheme}
     />
   );
 }
