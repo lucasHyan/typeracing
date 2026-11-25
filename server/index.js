@@ -141,6 +141,21 @@ function createPlayer(id, name, color, socketId) {
   };
 }
 
+function resetRoomRaceState(room) {
+  room.raceEndAt = null;
+  room.finishDeadline = null;
+  room.finishSecondsRemaining = null;
+  Object.values(room.players).forEach((player) => {
+    player.progress = 0;
+    player.input = "";
+    player.wpm = 0;
+    player.errors = 0;
+    player.isFinished = false;
+    player.elapsedMs = null;
+    player.finishTime = null;
+  });
+}
+
 function getResults(room) {
   const elapsedAtFinish = Date.now() - room.startedAt;
   const normalizedPlayers = getRoomPlayerList(room).map((player) => {
@@ -247,20 +262,11 @@ function finishRaceIfReady(room) {
 function startRace(room, targetText) {
   clearStartCountdown(room);
   clearFinishTimer(room);
+  resetRoomRaceState(room);
   room.status = "racing";
   room.targetText = cleanTargetText(targetText, room.targetText);
   room.startedAt = Date.now();
   room.results = [];
-
-  Object.values(room.players).forEach((player) => {
-    player.progress = 0;
-    player.input = "";
-    player.wpm = 0;
-    player.errors = 0;
-    player.isFinished = false;
-    player.elapsedMs = null;
-    player.finishTime = null;
-  });
 
   io.to(room.code).emit("race_started", {
     roomCode: room.code,
@@ -291,6 +297,7 @@ function tickRaceCountdown(room, secondsRemaining) {
 
 function startRaceCountdown(room, targetText) {
   clearStartCountdown(room);
+  resetRoomRaceState(room);
   room.status = "countdown";
   room.countdownTargetText = cleanTargetText(targetText, room.targetText);
   tickRaceCountdown(room, RACE_START_COUNTDOWN_SECONDS);
@@ -603,8 +610,7 @@ io.on("connection", (socket) => {
     room.results = [];
     clearFinishTimer(room);
     clearStartCountdown(room);
-    room.finishSecondsRemaining = null;
-    room.raceEndAt = null;
+    resetRoomRaceState(room);
 
     const lobbyRoom = getRoomSnapshot(room);
     io.to(roomCode).emit("room_lobby", { room: lobbyRoom });

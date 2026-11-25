@@ -179,6 +179,7 @@ function App() {
   if (room?.status === "countdown") {
     return (
       <RacePage
+        key={`${room.code}-${room.targetText || room.countdownTargetText || "countdown"}`}
         room={room}
         race={{
           roomCode: room.code,
@@ -192,7 +193,14 @@ function App() {
   }
 
   if (room?.status === "racing" && race) {
-    return <RacePage room={room} race={race} onLeaveRoom={handleLeaveRoom} />;
+    return (
+      <RacePage
+        key={`${room.code}-${race.startTime}-${race.targetText}`}
+        room={room}
+        race={race}
+        onLeaveRoom={handleLeaveRoom}
+      />
+    );
   }
 
   if (room?.status === "finished") {

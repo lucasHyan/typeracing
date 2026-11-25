@@ -4,7 +4,7 @@ import TypingArea from "./TypingArea";
 import { shakeElement } from "./animations";
 import { calculateProgress, calculateWpm, getInputUpdate } from "./typingUtils";
 import socket from "../services/socket";
-import { getPlayerId } from "../utils/playerIdentity";
+import { getPlayerId } from "../utils/playerIdentity.js";
 
 export default function Race({
   room,
@@ -13,22 +13,29 @@ export default function Race({
   onLeaveRoom,
 }) {
   const targetText = race?.targetText || room.targetText || "";
+  const raceStartTime = race?.startTime || null;
   const playerId = getPlayerId();
-  const currentPlayer = room.players?.[playerId];
-  const [userInput, setUserInput] = useState(currentPlayer?.input || "");
-  const [elapsedMs, setElapsedMs] = useState(currentPlayer?.elapsedMs ?? 0);
-  const [isFinished, setIsFinished] = useState(
-    currentPlayer?.isFinished || false,
-  );
-  const [finalWpm, setFinalWpm] = useState(
-    currentPlayer?.isFinished ? currentPlayer.wpm : null,
-  );
-  const [errorCount, setErrorCount] = useState(currentPlayer?.errors || 0);
+  const [userInput, setUserInput] = useState("");
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [isFinished, setIsFinished] = useState(false);
+  const [finalWpm, setFinalWpm] = useState(null);
+  const [errorCount, setErrorCount] = useState(0);
   const [clockTick, setClockTick] = useState(Date.now());
+  const [startTime, setStartTime] = useState(raceStartTime);
   const screenRef = useRef(null);
-  const errorCountRef = useRef(currentPlayer?.errors || 0);
-  const startTime = race?.startTime;
+  const errorCountRef = useRef(0);
   const isHost = room.hostId === playerId;
+
+  useEffect(() => {
+    setUserInput("");
+    setIsFinished(false);
+    setStartTime(raceStartTime);
+    setFinalWpm(null);
+    setElapsedMs(0);
+    setErrorCount(0);
+    setClockTick(Date.now());
+    errorCountRef.current = 0;
+  }, [targetText, raceStartTime, room?.status]);
 
   useEffect(() => {
     if (!startTime || isFinished) return undefined;
@@ -148,6 +155,7 @@ export default function Race({
             userInput={userInput}
             onInputChange={handleInputChange}
             isFinished={isFinished || countdownSeconds !== null}
+            raceStartTime={raceStartTime}
             difficulty={room.difficulty || "Intermediário"}
           />
 

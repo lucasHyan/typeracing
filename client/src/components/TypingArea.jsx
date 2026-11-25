@@ -1,10 +1,21 @@
+import { useEffect, useRef } from "react";
+
 export default function TypingArea({
   targetText,
   userInput,
   onInputChange,
   isFinished,
   difficulty = "Intermediário",
+  raceStartTime = null,
 }) {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isFinished && raceStartTime) {
+      inputRef.current?.focus();
+    }
+  }, [targetText, raceStartTime, isFinished]);
+
   const hasError = targetText
     .split("")
     .slice(0, userInput.length)
@@ -45,6 +56,7 @@ export default function TypingArea({
 
       <div className="mt-auto pt-4">
         <textarea
+          ref={inputRef}
           rows={1}
           value={userInput}
           onChange={onInputChange}
