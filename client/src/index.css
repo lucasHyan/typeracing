@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* A variante dark: segue a classe .dark no <html> (controlada pelo App),
+   e não a preferência do sistema operacional. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   font-family:
     Inter,
@@ -17,11 +21,14 @@
   --theme-background: #fff8f0;
   --theme-card: #ffffff;
   --theme-input: #ffffff;
-  --theme-elevated: #28303b;
+  --theme-elevated: #f1f5f9;
   --theme-border: #e9dccb;
   --theme-text: #1e242b;
-  --theme-secondary: #64748b;
-  --theme-pending: #94a3b8;
+  --theme-secondary: #475569;
+  --theme-pending: #64748b;
+  --theme-highlight: #ffe4d4;
+  --theme-highlight-border: #ffb48f;
+  --theme-highlight-text: #9a3412;
   background: var(--theme-background);
   color: var(--theme-text);
 }
@@ -34,116 +41,214 @@
   --theme-elevated: #28303b;
   --theme-border: #2e3744;
   --theme-text: #f8fafc;
-  --theme-secondary: #94a3b8;
-  --theme-pending: #94a3b8;
+  --theme-secondary: #a5b4c8;
+  --theme-pending: #cbd5e1;
+  --theme-highlight: #3a2a22;
+  --theme-highlight-border: #ff6b2b;
+  --theme-highlight-text: #ffb48f;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--theme-background);
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  /* Sem contorno azul ao clicar. Campos de texto já mostram foco pela própria borda;
+     botões e links mostram um anel laranja apenas na navegação por teclado. */
+  :focus {
+    outline: none;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  select:focus-visible {
+    outline: 2px solid #ff6b2b;
+    outline-offset: 2px;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
 }
 
-body {
-  min-width: 320px;
-  min-height: 100vh;
-  margin: 0;
+@layer components {
+  .theme-main {
+    background: var(--theme-background);
+    color: var(--theme-text);
+  }
+
+  .theme-card {
+    background: var(--theme-card);
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+  }
+
+  .theme-input {
+    background: var(--theme-input);
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+  }
+
+  .theme-elevated {
+    background: var(--theme-elevated);
+    color: var(--theme-text);
+  }
+
+  .theme-secondary {
+    color: var(--theme-secondary);
+  }
+
+  .theme-pending {
+    color: var(--theme-pending);
+  }
+
+  .brand-type {
+    color: var(--theme-text);
+  }
+
+  .theme-toggle {
+    display: grid;
+    height: 44px;
+    width: 44px;
+    place-items: center;
+    border: 1px solid var(--theme-border);
+    border-radius: 9999px;
+    background: var(--theme-card);
+    color: var(--theme-text);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
+    transition:
+      background-color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .theme-toggle:hover {
+    background: var(--theme-elevated);
+    border-color: var(--theme-highlight-border);
+    transform: translateY(-1px);
+  }
+
+  .typing-correct {
+    color: #16a34a;
+  }
+
+  .typing-error {
+    border-radius: 2px;
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .typing-pending {
+    border-radius: 2px;
+    background: #ffe4d4;
+    color: #c2410c;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+  }
+
+  :root.dark .typing-correct {
+    color: #22c55e;
+  }
+
+  :root.dark .typing-error {
+    background: #3b1d22;
+    color: #f87171;
+  }
+
+  :root.dark .typing-pending {
+    background: #3a2a22;
+    color: #ffb48f;
+  }
 }
 
-button,
-input,
-textarea {
-  font: inherit;
+/* Revelação do pódio: 3º → 2º → 1º (o atraso vem de --reveal-delay). */
+@keyframes podium-rise {
+  from {
+    opacity: 0;
+    transform: translateY(56px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #38bdf8;
-  outline-offset: 2px;
+@keyframes podium-car-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-36px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-#root {
-  min-height: 100vh;
+@keyframes podium-winner-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 183 3 / 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 22px rgb(255 183 3 / 0);
+  }
 }
 
-.theme-main {
-  background: var(--theme-background);
-  color: var(--theme-text);
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-.theme-card {
-  background: var(--theme-card);
-  border-color: var(--theme-border);
-  color: var(--theme-text);
-}
+@layer components {
+  .podium-reveal {
+    animation: podium-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: var(--reveal-delay, 0s);
+  }
 
-.theme-input {
-  background: var(--theme-input);
-  border-color: var(--theme-border);
-  color: var(--theme-text);
-}
+  .podium-car {
+    animation: podium-car-drop 0.6s ease-out both;
+    animation-delay: calc(var(--reveal-delay, 0s) + 0.35s);
+  }
 
-.theme-elevated {
-  background: var(--theme-elevated);
-  color: var(--theme-text);
-}
+  .podium-winner {
+    animation: podium-winner-glow 1.2s ease-out 3;
+    animation-delay: calc(var(--reveal-delay, 0s) + 0.6s);
+  }
 
-.theme-secondary {
-  color: var(--theme-secondary);
-}
+  .fade-up {
+    animation: fade-up 0.5s ease-out both;
+    animation-delay: var(--reveal-delay, 0s);
+  }
 
-.theme-pending {
-  color: var(--theme-pending);
-}
-
-.theme-toggle {
-  display: grid;
-  height: 36px;
-  width: 36px;
-  place-items: center;
-  border: 1px solid var(--theme-border);
-  border-radius: 9999px;
-  background: var(--theme-card);
-  color: var(--theme-text);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
-  transition:
-    background-color 150ms ease,
-    transform 150ms ease;
-}
-
-.theme-toggle:hover {
-  background: var(--theme-elevated);
-  transform: translateY(-1px);
-}
-
-.typing-correct {
-  color: #16a34a;
-}
-
-.typing-error {
-  border-radius: 2px;
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.typing-pending {
-  border-radius: 2px;
-  background: #fff1e8;
-  color: #ff6b2b;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 2px;
-}
-
-:root.dark .typing-correct {
-  color: #22c55e;
-}
-
-:root.dark .typing-error {
-  background: #3b1d22;
-  color: #f87171;
-}
-
-:root.dark .typing-pending {
-  background: #28303b;
-  color: #94a3b8;
+  @media (prefers-reduced-motion: reduce) {
+    .podium-reveal,
+    .podium-car,
+    .podium-winner,
+    .fade-up {
+      animation: none;
+    }
+  }
 }

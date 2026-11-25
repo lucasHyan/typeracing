@@ -1,75 +1,94 @@
-function RaceCar({ color }) {
-  return (
-    <svg
-      width="58"
-      height="38"
-      viewBox="0 0 58 38"
-      fill="none"
-      aria-hidden="true"
-      className="drop-shadow-sm"
-    >
-      <path
-        d="M10 25H4c-2 0-3-1-3-3v-3c0-2 1-3 3-3h8l5-8c1-2 3-3 5-3h17c3 0 5 1 7 3l8 10h1c2 0 3 1 3 3v1c0 2-1 3-3 3h-6"
-        fill={color}
-      />
-      <path d="M19 15l4-6h14l7 7H19v-1z" fill="#EAF3F7" />
-      <rect x="12" y="22" width="38" height="5" rx="2.5" fill={color} />
-      <circle cx="18" cy="27" r="6" fill="#1E242B" />
-      <circle cx="18" cy="27" r="2.5" fill="#FFF8F0" />
-      <circle cx="43" cy="27" r="6" fill="#1E242B" />
-      <circle cx="43" cy="27" r="2.5" fill="#FFF8F0" />
-    </svg>
-  );
-}
+import VehicleAvatar from "./VehicleAvatar.jsx";
+
+// Largura do veículo "sm" (VehicleAvatar) e espaço reservado à faixa de chegada.
+const VEHICLE_WIDTH = 60;
+const FINISH_WIDTH = 20;
+// Depois deste progresso a etiqueta alinha pela direita do veículo,
+// para nunca ultrapassar a linha de chegada.
+const LABEL_FLIP_PROGRESS = 60;
+
+const CHECKER_PATTERN = {
+  backgroundColor: "#F8FAFC",
+  backgroundImage:
+    "linear-gradient(45deg,#1E242B 25%,transparent 25%,transparent 75%,#1E242B 75%,#1E242B),linear-gradient(45deg,#1E242B 25%,transparent 25%,transparent 75%,#1E242B 75%,#1E242B)",
+  backgroundPosition: "0 0,5px 5px",
+  backgroundSize: "10px 10px",
+};
 
 export default function RaceTrack({ players, currentPlayerId }) {
   return (
-    <section className="relative h-[268px] overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 pb-4 pt-14 dark:border-[#2E3744] dark:bg-[#1E242B]">
-      <div className="relative h-[196px]">
-        {players.map((player, index) => {
-          const progress = Math.max(0, Math.min(100, player.progress || 0));
-          const isCurrent = player.id === currentPlayerId;
-          return (
-            <div
-              key={player.id}
-              className={`relative h-[49px] border-t border-dashed border-[#CBD5E1] bg-[#FFF8F0] dark:border-[#334155] dark:bg-[#14181F] ${isCurrent ? "bg-[#FFF1E8]/70 dark:bg-[#FF6B2B]/10" : ""}`}
-            >
-              {isCurrent && (
-                <div className="sr-only">Raia do jogador atual</div>
-              )}
-              <div
-                className="absolute top-1/2 z-10 -translate-y-1/2 transition-[left] duration-300 ease-out"
-                style={{
-                  left: `calc(${progress}% - ${Math.min(progress * 0.58, 58)}px)`,
-                }}
-              >
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-transparent bg-[#FFF8F0] px-2 py-1 text-[10px] font-bold text-[#1E242B] shadow-sm dark:border-[#3E4C5E] dark:bg-[#28303B] dark:text-[#F8FAFC]">
-                  {player.name}
-                  {isCurrent ? " • você" : ""} {progress}%
-                </div>
-                <RaceCar color={player.color || "#2563eb"} />
-              </div>
-              {index === players.length - 1 && (
-                <div
-                  className="pointer-events-none absolute bottom-0 right-0 top-0 w-[22px] border-l border-[#E9DCCB]"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(45deg,#1E242B 25%,transparent 25%,transparent 75%,#1E242B 75%,#1E242B),linear-gradient(45deg,#1E242B 25%,transparent 25%,transparent 75%,#1E242B 75%,#1E242B)",
-                    backgroundPosition: "0 0,11px 11px",
-                    backgroundSize: "22px 22px",
-                  }}
-                />
-              )}
-            </div>
-          );
-        })}
+    <div>
+      <div className="max-h-[264px] overflow-y-auto">
+        <div className="relative">
+          <ol>
+            {players.map((player) => {
+              const progress = Math.max(0, Math.min(100, player.progress || 0));
+              const isCurrent = player.id === currentPlayerId;
+              const alignLabelRight = progress > LABEL_FLIP_PROGRESS;
+
+              return (
+                <li
+                  key={player.id}
+                  className={`relative h-[66px] rounded-lg ${isCurrent ? "bg-[var(--theme-highlight)]" : ""}`}
+                >
+                  {isCurrent && (
+                    <span className="sr-only">Raia do jogador atual</span>
+                  )}
+                  {/* Linha da raia: o veículo "anda" sobre ela. */}
+                  <span
+                    aria-hidden="true"
+                    className="absolute bottom-[9px] left-3 border-t-2 border-dashed border-[#B6C2D1] dark:border-[#4B5A70]"
+                    style={{ right: FINISH_WIDTH + 12 }}
+                  />
+
+                  <div
+                    className="absolute inset-y-0 left-3"
+                    style={{ right: FINISH_WIDTH + 12 }}
+                  >
+                    <div
+                      className="absolute bottom-1 z-10 transition-[left] duration-300 ease-out"
+                      style={{
+                        left: `calc((100% - ${VEHICLE_WIDTH}px) * ${progress / 100})`,
+                        width: VEHICLE_WIDTH,
+                      }}
+                    >
+                      <span
+                        className={`absolute bottom-full mb-1 flex max-w-[240px] items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-bold leading-none shadow-sm ${
+                          alignLabelRight ? "right-0" : "left-0"
+                        } ${
+                          isCurrent
+                            ? "bg-[#C2410C] text-white"
+                            : "bg-[#EEF2F6] text-[#1E242B] ring-1 ring-[#D5DEE8] dark:bg-[#28303B] dark:text-[#F8FAFC] dark:ring-[#3E4C5E]"
+                        }`}
+                      >
+                        <span className="truncate">
+                          {player.name}
+                          {isCurrent ? " · você" : ""}
+                        </span>
+                        <span className="tabular-nums">{progress}%</span>
+                      </span>
+                      <VehicleAvatar
+                        emoji={player.emoji}
+                        color={player.color || "#2563eb"}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-2 rounded-sm ring-1 ring-[#1E242B]/20 dark:ring-[#F8FAFC]/30"
+            style={{ ...CHECKER_PATTERN, width: FINISH_WIDTH }}
+          />
+        </div>
       </div>
-      <div className="pointer-events-none absolute bottom-2 left-5 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] dark:text-[#94A3B8]">
-        Largada
+      <div className="theme-secondary mt-2 flex justify-between px-3 text-xs font-bold uppercase tracking-widest">
+        <span>Largada</span>
+        <span>Chegada</span>
       </div>
-      <div className="pointer-events-none absolute bottom-2 right-5 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] dark:text-[#94A3B8]">
-        Chegada
-      </div>
-    </section>
+    </div>
   );
 }

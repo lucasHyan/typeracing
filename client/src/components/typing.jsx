@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import RaceTrack from "./RaceTrack";
 import TypingArea from "./TypingArea";
-import paragraphs from "../paragraphs.json";
+import { RACE_TEXTS } from "../raceTexts.js";
 import { shakeElement } from "./animations";
 import {
   calculateProgress,
@@ -9,6 +9,9 @@ import {
   getInputUpdate,
   getRandomParagraph,
 } from "./typingUtils";
+
+// Modo solo: frases dos níveis Iniciante e Intermediário.
+const paragraphs = [...RACE_TEXTS.Iniciante, ...RACE_TEXTS.Intermediário];
 
 export default function Typing() {
   const [targetText, setTargetText] = useState(() =>

@@ -114,6 +114,7 @@ export default function Lobby({
     socket.on("update_players", handlePlayersUpdated);
     socket.on("player_customization_updated", handlePlayerJoined);
     socket.on("room_difficulty_updated", handlePlayerJoined);
+    socket.on("room_text_updated", handlePlayerJoined);
     socket.on("error_message", handleError);
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
@@ -127,6 +128,8 @@ export default function Lobby({
       socket.off("player_joined", handlePlayerJoined);
       socket.off("update_players", handlePlayersUpdated);
       socket.off("player_customization_updated", handlePlayerJoined);
+      socket.off("room_difficulty_updated", handlePlayerJoined);
+      socket.off("room_text_updated", handlePlayerJoined);
       socket.off("error_message", handleError);
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
@@ -153,7 +156,7 @@ export default function Lobby({
     socket.emit("create_room", {
       playerId: getPlayerId(),
       playerName: name,
-      targetText: getRandomRaceText(),
+      targetText: getRandomRaceText("Iniciante"),
       carColor: COLOR_PRESETS[0].value,
     });
   };
@@ -184,6 +187,22 @@ export default function Lobby({
 
   const handleCustomizationChange = (customization) => {
     if (!currentRoom?.code) return;
+    // Atualiza o card na hora; o servidor confirma via player_customization_updated
+    // (ou reverte o estado enviando o snapshot da sala, caso recuse a mudança).
+    const playerId = getPlayerId();
+    const currentPlayer = currentRoom.players?.[playerId];
+    if (currentPlayer) {
+      const nextRoom = {
+        ...currentRoom,
+        players: {
+          ...currentRoom.players,
+          [playerId]: { ...currentPlayer, ...customization },
+        },
+      };
+      currentRoomRef.current = nextRoom;
+      setCurrentRoom(nextRoom);
+      onRoomDataChange?.(nextRoom);
+    }
     socket.emit("update_player_customization", {
       roomCode: currentRoom.code,
       ...customization,
@@ -214,7 +233,8 @@ export default function Lobby({
     if (!currentRoom?.code) return;
     socket.emit("start_race", {
       roomCode: currentRoom.code,
-      targetText: currentRoom.targetText || getRandomRaceText(),
+      // Usa exatamente o texto exibido no card "Texto da partida".
+      targetText: currentRoom.targetText || getRandomRaceText(currentRoom.difficulty),
     });
   };
 
@@ -225,11 +245,23 @@ export default function Lobby({
     onLeaveRoom?.();
   };
 
+  // Dificuldade "Customizado": texto colado pelo dono da sala.
+  const handleRoomTextChange = (text) => {
+    if (!currentRoom?.code) return;
+    socket.emit("update_room_text", {
+      roomCode: currentRoom.code,
+      targetText: text,
+    });
+  };
+
+  // Dificuldade padrão: já sorteia o texto agora, para todos verem o texto real.
+  // Escolher a mesma dificuldade de novo sorteia outro texto.
   const handleDifficultyChange = (difficulty) => {
     if (!currentRoom?.code) return;
     socket.emit("update_room_difficulty", {
       roomCode: currentRoom.code,
       difficulty,
+      targetText: getRandomRaceText(difficulty, currentRoom.targetText),
     });
   };
 
@@ -255,6 +287,7 @@ export default function Lobby({
           onStartRace={handleStartRace}
           onCustomizationChange={handleCustomizationChange}
           onDifficultyChange={handleDifficultyChange}
+          onRoomTextChange={handleRoomTextChange}
           onLeaveRoom={handleLeaveRoom}
           onCopyRoomLink={handleCopyRoomLink}
           roomLinkCopied={roomLinkCopied}

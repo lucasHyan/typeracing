@@ -1,5 +1,4 @@
-import { useState } from "react";
-import ThemeToggle from "../ThemeToggle.jsx";
+import AppHeader from "../AppHeader.jsx";
 
 export default function LobbyEntry({
   playerName,
@@ -15,36 +14,13 @@ export default function LobbyEntry({
   theme = "light",
   onToggleTheme,
 }) {
-  const colorOptions = [
-    { name: "Vermelho", value: "#FF6B2B" },
-    { name: "Azul", value: "#00A8E8" },
-    { name: "Amarelo", value: "#FFB703" },
-    { name: "Verde", value: "#16A34A" },
-    { name: "Roxo", value: "#9B5DE5" },
-  ];
-  const [selectedColor, setSelectedColor] = useState(colorOptions[0].value);
-
   return (
-    <main className="theme-main min-h-screen w-full px-4 sm:px-6">
-      <header className="mx-auto h-24 px-8 max-w-6xl flex items-center justify-between">
-        <div className="flex items-center gap-3.5 text-2xl font-extrabold tracking-tight">
-          <span>
-            <span className="text-[#1E242B] dark:text-[#F8FAFC]">Type</span>
-            <span className="text-[#FF6B2B]">Racing</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
-          <div className="theme-card flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                isConnected ? "bg-[#16A34A]" : "bg-[#FFB703]"
-              }`}
-            />
-            {isConnected ? "Servidor Online" : "Conectando..."}
-          </div>
-        </div>
-      </header>
+    <main className="theme-main min-h-screen w-full px-4 pt-3 sm:px-6">
+      <AppHeader
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        isConnected={isConnected}
+      />
 
       <section className="mx-auto flex w-full max-w-6xl flex-col items-center pt-10 sm:pt-12">
         <img
@@ -73,33 +49,8 @@ export default function LobbyEntry({
             maxLength={18}
             autoComplete="nickname"
             autoFocus={isRoomCodeFromLink}
-            className="theme-input flex-1 outline-none placeholder:text-slate-400 min-w-0 px-1 py-3"
+            className="theme-input flex-1 outline-none placeholder:text-[var(--theme-secondary)] min-w-0 px-1 py-3"
           />
-
-          <div
-            className="flex items-center justify-center gap-2.5"
-            aria-label="Cores do piloto"
-          >
-            {colorOptions.map((color) => {
-              const isSelected = selectedColor === color.value;
-              return (
-                <button
-                  key={color.name}
-                  type="button"
-                  title={color.name}
-                  aria-label={color.name}
-                  aria-pressed={isSelected}
-                  onClick={() => setSelectedColor(color.value)}
-                  className={`h-5 w-5 shrink-0 rounded-full border-2 border-white transition ${
-                    isSelected
-                      ? "ring-2 ring-[#1E242B] ring-offset-2"
-                      : "ring-0"
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                />
-              );
-            })}
-          </div>
 
           <button
             type="button"

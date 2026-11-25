@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import LobbyPage from "./pages/LobbyPage.jsx";
 import RacePage from "./pages/RacePage.jsx";
 import ResultsPage from "./pages/ResultsPage.jsx";
@@ -6,17 +6,36 @@ import socket from "./services/socket.js";
 import { playersById } from "./utils/gamePresentation.js";
 import { getPlayerId } from "./utils/playerIdentity.js";
 
+const THEME_STORAGE_KEY = "typeracing_theme";
+
+// Modo claro é o padrão: só usa o escuro se o jogador escolheu explicitamente.
+function getInitialTheme() {
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function applyTheme(theme) {
+  const root = document.documentElement;
+  root.classList.toggle("dark", theme === "dark");
+  root.style.colorScheme = theme;
+}
+
 function App() {
   const [room, setRoom] = useState(null);
   const [race, setRace] = useState(null);
   const [roomMessage, setRoomMessage] = useState("");
-  const [theme, setTheme] = useState(() =>
-    localStorage.getItem("typeracing_theme") === "dark" ? "dark" : "light",
-  );
+  const [theme, setTheme] = useState(getInitialTheme);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("typeracing_theme", theme);
+  useLayoutEffect(() => {
+    applyTheme(theme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // armazenamento indisponível: o tema vale só para esta sessão
+    }
   }, [theme]);
 
   const handleToggleTheme = useCallback(() => {

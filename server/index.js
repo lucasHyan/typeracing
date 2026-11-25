@@ -94,6 +94,7 @@ function getRoomSnapshot(room) {
     raceEndAt: room.raceEndAt || null,
     difficulty: room.difficulty || "Iniciante",
     targetText: room.targetText,
+    isCustomText: Boolean(room.isCustomText),
     startedAt: room.startedAt,
     players,
     results: room.results,
@@ -118,10 +119,21 @@ function cleanColor(value, fallback) {
     : fallback;
 }
 
+const MIN_CUSTOM_TEXT_LENGTH = 10;
+
+// Mantém quebras de linha (trechos de código), mas padroniza para "\n",
+// troca tabs por espaços e remove espaços no fim das linhas.
 function cleanTargetText(value, fallback = DEFAULT_TEXT) {
-  return typeof value === "string" && value.trim()
-    ? value.trim().slice(0, 1000)
-    : fallback;
+  if (typeof value !== "string") return fallback;
+  const text = value
+    .replace(/\r\n?/g, "\n")
+    .replace(/\t/g, "    ")
+    .split("\n")
+    .map((line) => line.replace(/\s+$/, ""))
+    .join("\n")
+    .trim()
+    .slice(0, 1000);
+  return text || fallback;
 }
 
 function createPlayer(id, name, color, socketId) {
@@ -135,6 +147,7 @@ function createPlayer(id, name, color, socketId) {
     input: "",
     wpm: 0,
     errors: 0,
+    missedKeys: {},
     isFinished: false,
     elapsedMs: null,
     finishTime: null,
@@ -150,10 +163,35 @@ function resetRoomRaceState(room) {
     player.input = "";
     player.wpm = 0;
     player.errors = 0;
+    player.missedKeys = {};
     player.isFinished = false;
     player.elapsedMs = null;
     player.finishTime = null;
   });
+}
+
+// Aceita só { "<caractere esperado>": contagem } com chaves de 1 caractere visível.
+const MAX_MISSED_KEYS = 64;
+function sanitizeMissedKeys(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const entries = Object.entries(value)
+    .filter(
+      ([key, count]) =>
+        typeof key === "string" &&
+        [...key].length === 1 &&
+        Number.isSafeInteger(count) &&
+        count > 0 &&
+        count <= 10_000,
+    )
+    .slice(0, MAX_MISSED_KEYS);
+  return Object.fromEntries(entries);
+}
+
+function getAccuracy(player) {
+  const typed = (player.input || "").length;
+  const errors = Math.max(0, player.errors || 0);
+  if (typed + errors === 0) return 0;
+  return Math.round((typed / (typed + errors)) * 1000) / 10;
 }
 
 function getResults(room) {
@@ -174,6 +212,10 @@ function getResults(room) {
       wpm,
       elapsedMs: Math.max(0, elapsedMs),
       errors: Math.max(0, player.errors || 0),
+      missedKeys: player.missedKeys || {},
+      accuracy: getAccuracy(player),
+      charsTyped: (player.input || "").length,
+      totalChars: room.targetText.length,
     };
   });
 
@@ -360,6 +402,7 @@ io.on("connection", (socket) => {
       raceEndAt: null,
       difficulty: "Iniciante",
       targetText: cleanTargetText(data.targetText),
+      isCustomText: false,
       players: {
         [playerId]: createPlayer(
           playerId,
@@ -509,6 +552,8 @@ io.on("connection", (socket) => {
     if (Number.isSafeInteger(data.errors) && data.errors >= 0) {
       player.errors = data.errors;
     }
+    const missedKeys = sanitizeMissedKeys(data.missedKeys);
+    if (missedKeys) player.missedKeys = missedKeys;
 
     if (input === room.targetText) {
       player.isFinished = true;
@@ -666,7 +711,53 @@ io.on("connection", (socket) => {
     const difficultyOptions = ["Iniciante", "Intermediário", "Programador"];
     if (!difficultyOptions.includes(data.difficulty)) return;
     room.difficulty = data.difficulty;
+    // O cliente do dono já sorteia o texto ao escolher a dificuldade, para que
+    // todos vejam na sala de espera exatamente o texto que será usado.
+    if (typeof data.targetText === "string") {
+      room.targetText = cleanTargetText(data.targetText, room.targetText);
+    }
+    room.isCustomText = false;
     io.to(roomCode).emit("room_difficulty_updated", {
+      room: getRoomSnapshot(room),
+    });
+  });
+
+  // Dificuldade "Customizado": o dono da sala cola (Ctrl+V / área de transferência)
+  // um texto próprio. Escolher outra dificuldade volta aos textos sorteados.
+  socket.on("update_room_text", (data = {}) => {
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
+    const room = rooms[roomCode];
+    if (!room || !getSocketPlayer(socket, room)) return;
+    if (room.hostId !== socket.data.playerId) {
+      socket.emit(
+        "error_message",
+        "Somente o dono da sala pode alterar o texto da partida.",
+      );
+      return;
+    }
+    if (room.status !== "waiting") {
+      socket.emit(
+        "error_message",
+        "O texto só pode ser alterado na sala de espera.",
+      );
+      return;
+    }
+
+    const text = cleanTargetText(data.targetText, "");
+    if (text.length < MIN_CUSTOM_TEXT_LENGTH) {
+      socket.emit(
+        "error_message",
+        `O texto precisa ter pelo menos ${MIN_CUSTOM_TEXT_LENGTH} caracteres.`,
+      );
+      return;
+    }
+    room.targetText = text;
+    room.isCustomText = true;
+    room.difficulty = "Customizado";
+
+    io.to(roomCode).emit("room_text_updated", {
       room: getRoomSnapshot(room),
     });
   });

@@ -5,7 +5,7 @@ import { shakeElement } from "./animations";
 import { calculateProgress, calculateWpm, getInputUpdate } from "./typingUtils";
 import socket from "../services/socket";
 import { getPlayerId } from "../utils/playerIdentity.js";
-import ThemeToggle from "./ThemeToggle.jsx";
+import AppHeader from "./AppHeader.jsx";
 
 export default function Race({
   room,
@@ -27,6 +27,8 @@ export default function Race({
   const [startTime, setStartTime] = useState(raceStartTime);
   const screenRef = useRef(null);
   const errorCountRef = useRef(0);
+  // Tecla esperada -> quantas vezes o jogador errou nela (vai para o pódio).
+  const missedKeysRef = useRef({});
   const isHost = room.hostId === playerId;
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export default function Race({
     setErrorCount(0);
     setClockTick(Date.now());
     errorCountRef.current = 0;
+    missedKeysRef.current = {};
   }, [targetText, raceStartTime, room?.status]);
 
   useEffect(() => {
@@ -58,6 +61,24 @@ export default function Race({
   const handleInputChange = (event) => {
     if (isFinished || countdownSeconds !== null || !startTime) return;
 
+    // Anti-cola: ignora texto colado/arrastado e saltos de vários caracteres de uma vez.
+    const inputType = event.nativeEvent?.inputType || "";
+    // Tab no modo código (TypingArea) insere só os espaços de indentação esperados.
+    const isAutoIndent =
+      inputType === "insertAutoIndent" &&
+      event.target.value.startsWith(userInput) &&
+      /^ +$/.test(event.target.value.slice(userInput.length));
+    const isPasteLike =
+      !isAutoIndent &&
+      (inputType === "insertFromPaste" ||
+        inputType === "insertFromDrop" ||
+        inputType === "insertFromPasteAsQuotation" ||
+        event.target.value.length - userInput.length > 1);
+    if (isPasteLike) {
+      shakeElement(screenRef.current);
+      return;
+    }
+
     const { input: nextInput, shouldShake } = getInputUpdate(
       targetText,
       userInput,
@@ -75,6 +96,13 @@ export default function Race({
         nextInput[index] !== targetText[index]
       ) {
         newErrors += 1;
+        const expectedKey = targetText[index];
+        if (expectedKey !== undefined) {
+          missedKeysRef.current = {
+            ...missedKeysRef.current,
+            [expectedKey]: (missedKeysRef.current[expectedKey] || 0) + 1,
+          };
+        }
       }
     }
     const nextErrorCount = errorCountRef.current + newErrors;
@@ -90,6 +118,7 @@ export default function Race({
       input: nextInput,
       wpm: nextWpm,
       errors: nextErrorCount,
+      missedKeys: missedKeysRef.current,
     });
 
     if (finished) {
@@ -97,6 +126,13 @@ export default function Race({
       setFinalWpm(nextWpm);
       setIsFinished(true);
     }
+  };
+
+  const handleLeaveRace = () => {
+    const message = isHost
+      ? "Você é o dono da sala: sair agora encerra a corrida para todos. Deseja sair?"
+      : "Deseja sair da corrida? Seu progresso será perdido.";
+    if (window.confirm(message)) onLeaveRoom?.();
   };
 
   const progress = calculateProgress(userInput.length, targetText.length);
@@ -112,41 +148,28 @@ export default function Race({
   const elapsedTime = `${String(Math.floor(totalSeconds / 60)).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
 
   return (
-    <main
-      ref={screenRef}
-      className="theme-main h-screen overflow-hidden px-4 py-3 sm:px-6"
-    >
-      <header className="mx-auto flex h-14 max-w-[1280px] items-center justify-between">
-        <button
-          type="button"
-          onClick={onLeaveRoom}
-          className="text-2xl font-extrabold tracking-tight"
-          aria-label="Voltar à tela inicial"
-        >
-          <span className="text-[#1E242B] dark:text-[#F8FAFC]">Type</span>
-          <span className="text-[#FF6B2B]">Racing</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
-          <div className="theme-card flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold">
-            <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
-            Servidor Online
-          </div>
-        </div>
-      </header>
+    <main ref={screenRef} className="theme-main min-h-screen px-4 pb-8 pt-3 sm:px-6">
+      <AppHeader
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        onLeave={handleLeaveRace}
+      />
 
-      <div className="mx-auto flex h-[calc(100vh-68px)] max-w-[1280px] flex-col gap-4">
-        <section className="relative">
-          <div className="mb-2 flex h-10 items-end justify-between px-1">
-            <h1 className="text-xl font-extrabold">A corrida está valendo!</h1>
-            <span className="rounded-full border border-transparent bg-[#DDF7E8] px-3 py-1.5 text-[10px] font-bold uppercase text-[#16A34A] dark:border-[#22C55E]/30 dark:bg-[#163026] dark:text-[#4ADE80]">
-              • Ao vivo
+      <div className="mx-auto mt-6 flex max-w-[960px] flex-col gap-6">
+        <section className="theme-card relative rounded-2xl border p-5 shadow-sm sm:p-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h1 className="text-xl font-extrabold sm:text-2xl">
+              A corrida está valendo!
+            </h1>
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#DDF7E8] px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-[#15803D] dark:bg-[#163026] dark:text-[#4ADE80]">
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              Ao vivo
             </span>
           </div>
           <RaceTrack players={players} currentPlayerId={playerId} />
           {countdownSeconds !== null && countdownSeconds !== undefined && (
             <div
-              className="absolute inset-12 z-30 flex items-center justify-center rounded-2xl bg-[var(--theme-background)]/35 backdrop-blur-[1px]"
+              className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl bg-[var(--theme-background)]/50 backdrop-blur-[2px]"
               aria-live="polite"
             >
               <span className="grid h-24 w-24 place-items-center rounded-full border-4 border-white bg-[#FF6B2B] text-5xl font-black text-white shadow-xl">
@@ -156,65 +179,71 @@ export default function Race({
           )}
         </section>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-[65%_35%]">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_280px]">
           <TypingArea
             targetText={targetText}
             userInput={userInput}
             onInputChange={handleInputChange}
             isFinished={isFinished || countdownSeconds !== null}
             raceStartTime={raceStartTime}
-            difficulty={room.difficulty || "Intermediário"}
+            difficulty={
+              room.isCustomText
+                ? "Customizado"
+                : room.difficulty || "Intermediário"
+            }
+            isCode={
+              room.difficulty === "Programador" || targetText.includes("\n")
+            }
+            onBlockedAction={() => shakeElement(screenRef.current)}
           />
 
-          <aside className="grid min-h-0 grid-rows-[86px_1fr] gap-4">
+          <aside className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-4">
-              <section className="theme-card grid place-items-center rounded-2xl border px-3 text-center shadow-sm">
-                <div>
-                  <strong className="block text-2xl font-extrabold">
-                    {wpm} PPM
-                  </strong>
-                  <span className="mt-1 block text-xs text-[#64748B] dark:text-[#94A3B8]">
-                    Velocidade
-                  </span>
-                </div>
+              <section className="theme-card rounded-2xl border px-4 py-4 shadow-sm">
+                <strong className="block text-[28px] font-extrabold leading-tight tabular-nums">
+                  {wpm} PPM
+                </strong>
+                <span className="theme-secondary mt-1 block text-sm">
+                  Velocidade
+                </span>
               </section>
-              <section className="theme-card grid place-items-center rounded-2xl border px-3 text-center shadow-sm">
-                <div>
-                  <strong className="block text-2xl font-extrabold tabular-nums">
-                    {elapsedTime}
-                  </strong>
-                  <span className="mt-1 block text-xs text-[#64748B] dark:text-[#94A3B8]">
-                    Tempo decorrido
-                  </span>
-                </div>
+              <section className="theme-card rounded-2xl border px-4 py-4 shadow-sm">
+                <strong className="block text-[28px] font-extrabold leading-tight tabular-nums">
+                  {elapsedTime}
+                </strong>
+                <span className="theme-secondary mt-1 block text-sm">
+                  Tempo decorrido
+                </span>
               </section>
             </div>
 
-            <section className="theme-card min-h-0 overflow-hidden rounded-2xl border p-4 shadow-sm">
-              <h2 className="mb-3 text-base font-extrabold">Ranking ao Vivo</h2>
+            <section className="theme-card flex-1 rounded-2xl border p-3 shadow-sm">
+              <h2 className="px-2 pb-2 pt-2 text-lg font-extrabold">
+                Ranking ao Vivo
+              </h2>
               <ol className="space-y-1">
                 {ranking.map((player, index) => {
                   const isCurrent = player.id === playerId;
                   return (
                     <li
                       key={player.id}
-                      className={`flex items-center rounded-lg px-2 py-2 text-xs ${isCurrent ? "border border-transparent bg-[#FFF1E8] dark:border-[#FF6B2B]/40 dark:bg-[#FF6B2B]/15" : ""}`}
+                      className={`flex items-center rounded-lg px-2.5 py-2.5 text-sm ${isCurrent ? "bg-[var(--theme-highlight)]" : ""}`}
                     >
-                      <span className="w-8 font-bold text-[#94A3B8]">
+                      <span
+                        className={`w-8 font-bold tabular-nums ${isCurrent ? "text-[var(--theme-highlight-text)]" : "theme-secondary"}`}
+                      >
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <span
-                        className="mr-2 h-2.5 w-2.5 rounded-full"
+                        className="mr-2.5 h-2.5 w-2.5 shrink-0 rounded-full"
                         style={{ backgroundColor: player.color || "#2563eb" }}
                       />
                       <span
-                        className={`min-w-0 flex-1 truncate font-semibold ${isCurrent ? "dark:text-[#F8FAFC]" : ""}`}
+                        className={`min-w-0 flex-1 truncate ${isCurrent ? "font-extrabold" : "font-medium"}`}
                       >
                         {player.name}
                       </span>
-                      <strong
-                        className={`tabular-nums ${isCurrent ? "dark:text-[#F8FAFC]" : ""}`}
-                      >
+                      <strong className="tabular-nums">
                         {player.progress || 0}%
                       </strong>
                     </li>
@@ -223,7 +252,7 @@ export default function Race({
               </ol>
               {remainingSeconds !== null && (
                 <div className="theme-elevated mt-3 flex items-center justify-between rounded-lg px-3 py-2">
-                  <span className="text-xs font-bold text-[#64748B]">
+                  <span className="theme-secondary text-sm font-bold">
                     Encerrando em {remainingSeconds}s
                   </span>
                   {isHost && (
@@ -234,7 +263,7 @@ export default function Race({
                           roomCode: race.roomCode || room.code,
                         })
                       }
-                      className="rounded-lg bg-[#FF6B2B] px-3 py-2 text-xs font-bold text-white"
+                      className="cursor-pointer rounded-lg bg-[#FF6B2B] px-3 py-2 text-xs font-bold text-white"
                     >
                       +10s
                     </button>
