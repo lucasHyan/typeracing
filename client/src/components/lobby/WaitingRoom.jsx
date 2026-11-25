@@ -45,8 +45,8 @@ export default function WaitingRoom({
   return (
     <main className="theme-main min-h-screen px-4 py-5 sm:px-6 sm:py-7">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between">
-        <div className="text-xl font-extrabold tracking-tight text-[#1E242B]">
-          Type
+        <div className="text-xl font-extrabold tracking-tight">
+          <span className="text-[#1E242B] dark:text-[#F8FAFC]">Type</span>
           <span className="text-[#FF6B2B]">Racing</span>
         </div>
         <div className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export default function WaitingRoom({
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
             Sala de espera
           </h1>
-          <p className="mt-2 text-sm text-slate-500 sm:text-base">
+          <p className="mt-2 text-sm text-slate-500 dark:text-[#94A3B8] sm:text-base">
             Todo mundo na pista? Prepare os dedos para a largada.
           </p>
         </header>
@@ -77,7 +77,7 @@ export default function WaitingRoom({
             <p className="text-[11px] font-bold tracking-[0.16em] text-slate-500">
               CÓDIGO DA SALA
             </p>
-            <p className="mt-1 font-mono text-4xl font-black tracking-[0.12em] text-[#1E242B] sm:text-5xl">
+            <p className="mt-1 font-mono text-4xl font-black tracking-[0.12em] text-[#1E242B] dark:text-[#F8FAFC] sm:text-5xl">
               {room.code}
             </p>
           </div>
@@ -109,8 +109,8 @@ export default function WaitingRoom({
                         aria-pressed={difficulty === option}
                         className={`cursor-pointer rounded-md px-2 py-2 text-xs font-semibold transition disabled:cursor-not-allowed sm:text-sm ${
                           difficulty === option
-                            ? "theme-card shadow-sm"
-                            : "theme-secondary hover:opacity-80"
+                            ? "theme-card border border-[#FF6B2B] shadow-sm dark:bg-[#28303B] dark:text-white"
+                            : "theme-secondary hover:opacity-80 dark:text-[#CBD5E1]"
                         }`}
                       >
                         {option}

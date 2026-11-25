@@ -99,7 +99,7 @@ export default function Results({
           className={`relative flex w-full flex-col items-center justify-center rounded-2xl border text-center ${isFirst ? "h-56 border-[#FFB703] bg-[#FFB703] text-[#14181F]" : isSecond ? "theme-card h-44 border-t-4 border-t-[#00A8E8]" : "theme-card h-36 border-t-4 border-t-[#FF6B2B]"}`}
         >
           <span
-            className={`absolute -top-5 grid h-11 w-11 place-items-center rounded-full border-4 border-white text-sm font-black ${isFirst ? "bg-[#FFF8F0] text-[#1E242B]" : "bg-[#FFF8F0] text-[#64748B]"}`}
+            className={`absolute -top-5 grid h-11 w-11 place-items-center rounded-full border-4 border-white text-sm font-black dark:border-[#2E3744] dark:bg-[#28303B] ${isFirst ? "bg-[#FFB703] text-[#14181F]" : "bg-[#FFF8F0] text-[#64748B] dark:text-[#F8FAFC]"}`}
           >
             {place}º
           </span>
@@ -114,14 +114,14 @@ export default function Results({
             {player.wpm || 0} PPM
           </strong>
           <div className="mt-3 grid grid-cols-3 gap-1 px-2">
-            <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-bold text-[#1E242B]">
+            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#14181F]">
               {player.progress || 0}%
             </span>
-            <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-bold text-[#1E242B]">
+            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#14181F]">
               {formatFinalTime(player.elapsedMs)}
             </span>
             <span
-              className={`rounded-full px-2 py-1 text-[10px] font-bold ${errors === 0 ? "bg-white text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"}`}
+              className={`rounded-full px-2 py-1 text-[10px] font-bold ${errors === 0 ? "bg-white/90 text-[#14181F]" : "bg-[#FEE2E2] text-[#B91C1C]"}`}
             >
               {errors} {errors === 1 ? "erro" : "erros"}
             </span>
@@ -148,7 +148,8 @@ export default function Results({
             className="mr-2 h-9 w-9 object-contain"
           />
           <span>
-            Type<span className="text-[#FF6B2B]">Racing</span>
+            <span className="text-[#1E242B] dark:text-[#F8FAFC]">Type</span>
+            <span className="text-[#FF6B2B]">Racing</span>
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -165,7 +166,7 @@ export default function Results({
           <h1 className="text-3xl font-extrabold sm:text-4xl">
             Pódio da Corrida!
           </h1>
-          <p className="mt-2 text-sm text-[#64748B]">
+          <p className="mt-2 text-sm text-[#64748B] dark:text-[#94A3B8]">
             Sala {room.code} • Dificuldade: {difficultyLabel}
           </p>
         </header>
@@ -209,7 +210,7 @@ export default function Results({
               <button
                 type="button"
                 onClick={handleExportCsv}
-                className="theme-card rounded-xl border-2 border-[#00A8E8] px-8 py-3.5 font-bold text-[#00A8E8] transition hover:bg-[#28303B]"
+                className="theme-card rounded-xl border-2 border-[#00A8E8] px-8 py-3.5 font-bold text-[#00A8E8] transition dark:border-[#00A8E8] dark:text-[#38BDF8] dark:hover:bg-[#00A8E8]/15"
               >
                 Exportar CSV
               </button>

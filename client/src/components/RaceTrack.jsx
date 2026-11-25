@@ -24,7 +24,7 @@ function RaceCar({ color }) {
 
 export default function RaceTrack({ players, currentPlayerId }) {
   return (
-    <section className="relative h-[268px] overflow-hidden rounded-2xl border border-[#E9DCCB] bg-white px-5 pb-4 pt-14">
+    <section className="relative h-[268px] overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 pb-4 pt-14 dark:border-[#2E3744] dark:bg-[#1E242B]">
       <div className="relative h-[196px]">
         {players.map((player, index) => {
           const progress = Math.max(0, Math.min(100, player.progress || 0));
@@ -32,7 +32,7 @@ export default function RaceTrack({ players, currentPlayerId }) {
           return (
             <div
               key={player.id}
-              className={`relative h-[49px] border-t border-dashed border-[#CBD5E1] ${isCurrent ? "bg-[#FFF1E8]/70" : ""}`}
+              className={`relative h-[49px] border-t border-dashed border-[#CBD5E1] bg-[#FFF8F0] dark:border-[#334155] dark:bg-[#14181F] ${isCurrent ? "bg-[#FFF1E8]/70 dark:bg-[#FF6B2B]/10" : ""}`}
             >
               {isCurrent && (
                 <div className="sr-only">Raia do jogador atual</div>
@@ -43,7 +43,7 @@ export default function RaceTrack({ players, currentPlayerId }) {
                   left: `calc(${progress}% - ${Math.min(progress * 0.58, 58)}px)`,
                 }}
               >
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#FFF8F0] px-2 py-1 text-[10px] font-bold text-[#1E242B] shadow-sm">
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-transparent bg-[#FFF8F0] px-2 py-1 text-[10px] font-bold text-[#1E242B] shadow-sm dark:border-[#3E4C5E] dark:bg-[#28303B] dark:text-[#F8FAFC]">
                   {player.name}
                   {isCurrent ? " • você" : ""} {progress}%
                 </div>
@@ -64,10 +64,10 @@ export default function RaceTrack({ players, currentPlayerId }) {
           );
         })}
       </div>
-      <div className="pointer-events-none absolute bottom-2 left-5 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">
+      <div className="pointer-events-none absolute bottom-2 left-5 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] dark:text-[#94A3B8]">
         Largada
       </div>
-      <div className="pointer-events-none absolute bottom-2 right-5 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">
+      <div className="pointer-events-none absolute bottom-2 right-5 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] dark:text-[#94A3B8]">
         Chegada
       </div>
     </section>

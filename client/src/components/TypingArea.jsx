@@ -25,22 +25,23 @@ export default function TypingArea({
     <section className="theme-card flex h-full flex-col rounded-2xl border p-5 shadow-sm">
       <div>
         <h2 className="text-lg font-extrabold">Continue digitando</h2>
-        <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#64748B]">
+        <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#64748B] dark:text-[#94A3B8]">
           Trecho atual • {difficulty}
         </p>
       </div>
 
       <div className="mt-4 select-none text-[19px] leading-[1.55] text-[#94A3B8] sm:text-xl">
         {targetText.split("").map((character, index) => {
-          let className = "theme-pending";
+          let className = "text-[#94A3B8] dark:text-[#CBD5E1]";
 
           if (index < userInput.length) {
             className =
               userInput[index] === character
-                ? "typing-correct"
-                : "typing-error";
+                ? "text-[#16A34A] dark:text-[#4ADE80]"
+                : "rounded-sm bg-[#FEE2E2] text-[#DC2626] dark:bg-[#3B1D22] dark:text-[#F87171]";
           } else if (index === userInput.length) {
-            className = "typing-pending";
+            className =
+              "typing-pending rounded-sm bg-[#FFF1E8] text-[#FF6B2B] underline decoration-2 underline-offset-2 dark:bg-[#28303B] dark:text-[#CBD5E1]";
           }
 
           return (

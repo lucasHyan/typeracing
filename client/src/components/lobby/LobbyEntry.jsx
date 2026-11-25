@@ -29,7 +29,8 @@ export default function LobbyEntry({
       <header className="mx-auto h-24 px-8 max-w-6xl flex items-center justify-between">
         <div className="flex items-center gap-3.5 text-2xl font-extrabold tracking-tight">
           <span>
-            Type<span className="text-[#FF6B2B]">Racing</span>
+            <span className="text-[#1E242B] dark:text-[#F8FAFC]">Type</span>
+            <span className="text-[#FF6B2B]">Racing</span>
           </span>
         </div>
         <div className="flex items-center gap-2">

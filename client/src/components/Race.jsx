@@ -123,7 +123,8 @@ export default function Race({
           className="text-2xl font-extrabold tracking-tight"
           aria-label="Voltar à tela inicial"
         >
-          Type<span className="text-[#FF6B2B]">Racing</span>
+          <span className="text-[#1E242B] dark:text-[#F8FAFC]">Type</span>
+          <span className="text-[#FF6B2B]">Racing</span>
         </button>
         <div className="flex items-center gap-2">
           <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
@@ -138,7 +139,7 @@ export default function Race({
         <section className="relative">
           <div className="mb-2 flex h-10 items-end justify-between px-1">
             <h1 className="text-xl font-extrabold">A corrida está valendo!</h1>
-            <span className="rounded-full bg-[#DDF7E8] px-3 py-1.5 text-[10px] font-bold uppercase text-[#16A34A]">
+            <span className="rounded-full border border-transparent bg-[#DDF7E8] px-3 py-1.5 text-[10px] font-bold uppercase text-[#16A34A] dark:border-[#22C55E]/30 dark:bg-[#163026] dark:text-[#4ADE80]">
               • Ao vivo
             </span>
           </div>
@@ -172,7 +173,7 @@ export default function Race({
                   <strong className="block text-2xl font-extrabold">
                     {wpm} PPM
                   </strong>
-                  <span className="mt-1 block text-xs text-[#64748B]">
+                  <span className="mt-1 block text-xs text-[#64748B] dark:text-[#94A3B8]">
                     Velocidade
                   </span>
                 </div>
@@ -182,7 +183,7 @@ export default function Race({
                   <strong className="block text-2xl font-extrabold tabular-nums">
                     {elapsedTime}
                   </strong>
-                  <span className="mt-1 block text-xs text-[#64748B]">
+                  <span className="mt-1 block text-xs text-[#64748B] dark:text-[#94A3B8]">
                     Tempo decorrido
                   </span>
                 </div>
@@ -197,7 +198,7 @@ export default function Race({
                   return (
                     <li
                       key={player.id}
-                      className={`flex items-center rounded-lg px-2 py-2 text-xs ${isCurrent ? "bg-[#FFF1E8]" : ""}`}
+                      className={`flex items-center rounded-lg px-2 py-2 text-xs ${isCurrent ? "border border-transparent bg-[#FFF1E8] dark:border-[#FF6B2B]/40 dark:bg-[#FF6B2B]/15" : ""}`}
                     >
                       <span className="w-8 font-bold text-[#94A3B8]">
                         {String(index + 1).padStart(2, "0")}
@@ -206,10 +207,14 @@ export default function Race({
                         className="mr-2 h-2.5 w-2.5 rounded-full"
                         style={{ backgroundColor: player.color || "#2563eb" }}
                       />
-                      <span className="min-w-0 flex-1 truncate font-semibold">
+                      <span
+                        className={`min-w-0 flex-1 truncate font-semibold ${isCurrent ? "dark:text-[#F8FAFC]" : ""}`}
+                      >
                         {player.name}
                       </span>
-                      <strong className="tabular-nums">
+                      <strong
+                        className={`tabular-nums ${isCurrent ? "dark:text-[#F8FAFC]" : ""}`}
+                      >
                         {player.progress || 0}%
                       </strong>
                     </li>
