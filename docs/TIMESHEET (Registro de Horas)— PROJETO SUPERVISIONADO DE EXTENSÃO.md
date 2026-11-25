@@ -26,25 +26,30 @@
 | Desenvolvimento | 15/11/2026 | 15/11/2026 | 1,5 | Implementação de reconexão automática de jogador utilizando `sessionStorage` para tolerância a quedas de conexão em rede escolar | N | https://github.com/lucasHyan/typeracing/commit/72ee813 | Lucas Hyan | Sessão das 20:00 às 21:30. Atendimento à recomendação técnica do orientador garantindo retorno automático do aluno à corrida após recarregamento ou oscilação de Wi-Fi. |
 | Testes | 16/11/2026 | 16/11/2026 | 1,0 | Bateria de testes funcionais multi-abas em ambiente de produção (Vercel + Render) com múltiplos participantes simultâneos e análise de logs WebSocket | N | https://docs.google.com/document/d/1yURsbpE2Qp9_54O5V9HYyZbhOFmqY8k209iaQLL8r5I/edit#16-11-testes | Lucas Hyan | Sessão das 19:00 às 20:00. Validação de estabilidade das salas em memória RAM, sincronização de corrida, reconexão de sessão e registros em tempo real no painel do Render. |
 | Requisitos | 16/11/2026 | 16/11/2026 | 0,5 | Alinhamento via WhatsApp com a coordenação da Ctrl+Play Vila Ré para agendamento da primeira visita presencial e teste piloto em sala de aula | S | https://docs.google.com/document/d/1yURsbpE2Qp9_54O5V9HYyZbhOFmqY8k209iaQLL8r5I/edit#16-11-alinhamento | Lucas Hyan | Sessão das 20:00 às 20:30. Coordenação da visita presencial e aplicação piloto do protótipo multiplayer agendada para sábado, 28/11/2026, nos minutos iniciais/finais da aula. |
+| Requisitos | 18/11/2026 | 18/11/2026 | 0,5 | Alinhamento final via WhatsApp com a coordenação da Ctrl+Play Vila Ré para confirmação da visita presencial de 28/11/2026 e logística de aplicação piloto | S | https://docs.google.com/document/d/1yURsbpE2Qp9_54O5V9HYyZbhOFmqY8k209iaQLL8r5I/edit#18-11-alinhamento | Lucas Hyan | Confirmação operacional junto à coordenação pedagógica definindo os detalhes da aplicação presencial com os alunos no sábado, 28/11/2026. |
+| Planejamento/design | 18/11/2026 | 18/11/2026 | 2,5 | Criação da identidade visual editorial de alto contraste (paleta #FFF8F0, #FF6B2B, #00A8E8 e #FFB703) e prototipação dos frames desktop no Figma | N | https://www.figma.com/design/yMeQFFgR9j3nSHt6lkswA0/TypeRacing---UI-Design?node-id=0-1 | Lucas Hyan | Redesign orientado a legibilidade em projetor escolar, separação semântica de cores e prototipação das 4 telas (Início, Sala de Espera, Corrida em Tela Única e Pódio). |
+| Desenvolvimento | 18/11/2026 | 18/11/2026 | 2,5 | Refatoração completa da Tela Inicial (`LobbyEntry.jsx`) com layout aberto editorial, barra unificada de piloto e cor, entrada inline por PIN e novos logos | N | https://github.com/lucasHyan/typeracing/commit/0f4d100 | Lucas Hyan | Implementação fiel ao protótipo do Figma (commits `73437ac` e `0f4d100`), integração de `logo_small.png` e `logo.png` e publicação na Vercel (`typeracing-two.vercel.app`). |
+| Planejamento/design | 24/11/2026 | 24/11/2026 | 2,0 | Prototipação e refinamento visual da tela de Pódio e Resultados (estilo Kahoot) no Figma com métricas pedagógicas de PPM e contagem de erros | N | https://www.figma.com/design/yMeQFFgR9j3nSHt6lkswA0/TypeRacing---UI-Design | Lucas Hyan | Bloco inicial da sessão de 24/11. Fechamento do fluxo completo de 4 telas de alta fidelidade voltadas para projeção em sala de aula. |
+| Desenvolvimento | 24/11/2026 | 24/11/2026 | 5,0 | Implementação da tela única de corrida, pódio escalonado, controle de permissões do anfitrião e timer autoritativo de encerramento (20s + botão +10s) | N | https://github.com/lucasHyan/typeracing/commit/f169669 | Lucas Hyan | Sessão de desenvolvimento e debug (commits `24ed665` e `f169669`). Congelamento individual de tempo/PPM ao concluir, retorno coletivo ao lobby e exibição completa de métricas no pódio. |
 
-**TOTAL DE HORAS DECLARADAS:** 46,0 h
+**TOTAL DE HORAS DECLARADAS:** 58,5 h
 
 ### Resumo por etapa
 | Etapa | Horas | % do total |
 | :--- | :--- | :--- |
 | Prospecção | 0 | 0% |
-| Requisitos | 8,0 | 17,4% |
-| Planejamento/design | 5,3 | 11,5% |
-| Desenvolvimento | 26,7 | 58,0% |
-| Testes | 2,5 | 5,4% |
-| Entrega/implantação | 2,5 | 5,4% |
+| Requisitos | 8,5 | 14,5% |
+| Planejamento/design | 9,8 | 16,7% |
+| Desenvolvimento | 34,2 | 58,5% |
+| Testes | 2,5 | 4,3% |
+| Entrega/implantação | 2,5 | 4,3% |
 | Treinamento | 0 | 0% |
-| Documentação | 1,0 | 2,2% |
-| **Total** | **46,0** | **100%** |
+| Documentação | 1,0 | 1,7% |
+| **Total** | **58,5** | **100%** |
 
 ### Resumo de encontros com o cliente (presenciais ou síncronos)
-- **Horas em encontros com o cliente:** 2,5 h
-- **Nº de encontros com o cliente:** 3
+- **Horas em encontros com o cliente:** 3,0 h
+- **Nº de encontros com o cliente:** 4
 
 ### Orientações de preenchimento
 1. Uma linha por sessão (datas × atividade). Sessões abaixo de 15 min não precisam entrar.
