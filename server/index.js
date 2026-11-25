@@ -22,7 +22,7 @@ const io = new Server(server, {
 const rooms = {};
 const DEFAULT_TEXT = "Programar todos os dias melhora sua lógica e velocidade.";
 const RACE_START_COUNTDOWN_SECONDS = 3;
-const FINISH_COUNTDOWN_MS = 30_000;
+const FINISH_COUNTDOWN_MS = 20_000;
 const FINISH_TIME_EXTENSION_MS = 10_000;
 const VEHICLE_EMOJIS = new Set([
   "🚗",
@@ -91,6 +91,8 @@ function getRoomSnapshot(room) {
     countdownSeconds: room.countdownSeconds,
     countdownTargetText: room.countdownTargetText,
     finishSecondsRemaining: room.finishSecondsRemaining,
+    raceEndAt: room.raceEndAt || null,
+    difficulty: room.difficulty || "Iniciante",
     targetText: room.targetText,
     startedAt: room.startedAt,
     players,
@@ -140,26 +142,45 @@ function createPlayer(id, name, color, socketId) {
 }
 
 function getResults(room) {
-  return getRoomPlayerList(room)
-    .sort((first, second) => {
-      if (first.isFinished !== second.isFinished) {
-        return first.isFinished ? -1 : 1;
-      }
-      if (first.isFinished) {
-        return first.elapsedMs - second.elapsedMs;
-      }
-      return second.progress - first.progress || second.wpm - first.wpm;
-    })
-    .map((player, index) => ({
+  const elapsedAtFinish = Date.now() - room.startedAt;
+  const normalizedPlayers = getRoomPlayerList(room).map((player) => {
+    const elapsedMs = Math.max(
+      1,
+      player.isFinished ? player.elapsedMs || elapsedAtFinish : elapsedAtFinish,
+    );
+    const progress = Math.max(0, Math.min(100, player.progress || 0));
+    const wpm = player.isFinished
+      ? player.wpm || 0
+      : Math.round(player.input.length / 5 / (elapsedMs / 60000));
+
+    return {
       ...getPublicPlayer(player),
-      place: index + 1,
-    }));
+      progress,
+      wpm,
+      elapsedMs: Math.max(0, elapsedMs),
+      errors: Math.max(0, player.errors || 0),
+    };
+  });
+
+  return normalizedPlayers
+    .sort((first, second) => {
+      if (first.isFinished !== second.isFinished)
+        return first.isFinished ? -1 : 1;
+      if (first.isFinished)
+        return (first.elapsedMs || 0) - (second.elapsedMs || 0);
+      return (
+        (second.progress || 0) - (first.progress || 0) ||
+        (second.wpm || 0) - (first.wpm || 0)
+      );
+    })
+    .map((player, index) => ({ ...player, place: index + 1 }));
 }
 
 function clearFinishTimer(room) {
   if (room.finishTimeout) clearTimeout(room.finishTimeout);
   room.finishTimeout = null;
   room.finishDeadline = null;
+  room.raceEndAt = null;
   room.finishSecondsRemaining = null;
 }
 
@@ -185,7 +206,8 @@ function finishRace(room) {
 
 function scheduleFinishTimer(room) {
   if (room.finishTimeout) clearTimeout(room.finishTimeout);
-  const remainingMs = room.finishDeadline - performance.now();
+  if (!room.raceEndAt) return;
+  const remainingMs = room.raceEndAt - Date.now();
   if (remainingMs <= 0) {
     finishRace(room);
     return;
@@ -194,6 +216,7 @@ function scheduleFinishTimer(room) {
   io.to(room.code).emit("race_timer", {
     roomCode: room.code,
     secondsRemaining: room.finishSecondsRemaining,
+    raceEndAt: room.raceEndAt,
   });
   room.finishTimeout = setTimeout(
     () => scheduleFinishTimer(room),
@@ -202,8 +225,9 @@ function scheduleFinishTimer(room) {
 }
 
 function startFinishTimer(room) {
-  if (room.finishDeadline) return;
-  room.finishDeadline = performance.now() + FINISH_COUNTDOWN_MS;
+  if (room.raceEndAt) return;
+  room.raceEndAt = Date.now() + FINISH_COUNTDOWN_MS;
+  room.finishDeadline = room.raceEndAt;
   scheduleFinishTimer(room);
 }
 
@@ -326,6 +350,8 @@ io.on("connection", (socket) => {
       finishDeadline: null,
       finishTimeout: null,
       finishSecondsRemaining: null,
+      raceEndAt: null,
+      difficulty: "Iniciante",
       targetText: cleanTargetText(data.targetText),
       players: {
         [playerId]: createPlayer(
@@ -492,7 +518,7 @@ io.on("connection", (socket) => {
     finishRaceIfReady(room);
   });
 
-  socket.on("extend_race_timer", (data = {}) => {
+  const handleAddRaceTime = (data = {}) => {
     const roomCode = String(data.roomCode || "")
       .trim()
       .toUpperCase();
@@ -509,18 +535,18 @@ io.on("connection", (socket) => {
       );
       return;
     }
-    if (room.status !== "racing" || !room.finishDeadline) {
-      socket.emit("error_message", "O tempo extra ainda não está disponível.");
-      return;
-    }
-    if (room.finishDeadline <= performance.now()) {
-      finishRace(room);
+    if (room.status !== "racing") {
+      socket.emit("error_message", "A partida não está em andamento.");
       return;
     }
 
-    room.finishDeadline += FINISH_TIME_EXTENSION_MS;
+    room.raceEndAt = (room.raceEndAt || Date.now()) + FINISH_TIME_EXTENSION_MS;
+    room.finishDeadline = room.raceEndAt;
     scheduleFinishTimer(room);
-  });
+  };
+
+  socket.on("add_race_time", handleAddRaceTime);
+  socket.on("extend_race_timer", handleAddRaceTime);
 
   socket.on("start_another_race", (data = {}) => {
     const roomCode = String(data.roomCode || "")
@@ -575,17 +601,14 @@ io.on("connection", (socket) => {
     room.status = "waiting";
     room.targetText = cleanTargetText(data.targetText, room.targetText);
     room.results = [];
-    Object.values(room.players).forEach((player) => {
-      player.progress = 0;
-      player.input = "";
-      player.wpm = 0;
-      player.errors = 0;
-      player.isFinished = false;
-      player.elapsedMs = null;
-      player.finishTime = null;
-    });
+    clearFinishTimer(room);
+    clearStartCountdown(room);
+    room.finishSecondsRemaining = null;
+    room.raceEndAt = null;
 
-    io.to(roomCode).emit("room_lobby", { room: getRoomSnapshot(room) });
+    const lobbyRoom = getRoomSnapshot(room);
+    io.to(roomCode).emit("room_lobby", { room: lobbyRoom });
+    io.to(roomCode).emit("returned_to_lobby", { room: lobbyRoom });
   });
 
   socket.on("leave_room", (data = {}) => {
@@ -624,6 +647,22 @@ io.on("connection", (socket) => {
     }
 
     finishRaceIfReady(room);
+  });
+
+  socket.on("update_room_difficulty", (data = {}) => {
+    const roomCode = String(data.roomCode || "")
+      .trim()
+      .toUpperCase();
+    const room = rooms[roomCode];
+    if (!room || room.status !== "waiting") return;
+    if (room.hostId !== socket.data.playerId || !getSocketPlayer(socket, room))
+      return;
+    const difficultyOptions = ["Iniciante", "Intermediário", "Programador"];
+    if (!difficultyOptions.includes(data.difficulty)) return;
+    room.difficulty = data.difficulty;
+    io.to(roomCode).emit("room_difficulty_updated", {
+      room: getRoomSnapshot(room),
+    });
   });
 
   socket.on("disconnect", () => {

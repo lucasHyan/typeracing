@@ -104,6 +104,7 @@ function App() {
           ? {
               ...currentRoom,
               finishSecondsRemaining: data.secondsRemaining,
+              raceEndAt: data.raceEndAt || currentRoom.raceEndAt,
             }
           : currentRoom,
       );
@@ -121,6 +122,7 @@ function App() {
                 ? playersById(data.players)
                 : currentRoom.players,
               results: data.results || [],
+              raceEndAt: null,
             }
           : currentRoom,
       );

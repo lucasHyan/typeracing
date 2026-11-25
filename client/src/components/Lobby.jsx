@@ -111,6 +111,7 @@ export default function Lobby({
     socket.on("player_joined", handlePlayerJoined);
     socket.on("update_players", handlePlayersUpdated);
     socket.on("player_customization_updated", handlePlayerJoined);
+    socket.on("room_difficulty_updated", handlePlayerJoined);
     socket.on("error_message", handleError);
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
@@ -222,6 +223,14 @@ export default function Lobby({
     onLeaveRoom?.();
   };
 
+  const handleDifficultyChange = (difficulty) => {
+    if (!currentRoom?.code) return;
+    socket.emit("update_room_difficulty", {
+      roomCode: currentRoom.code,
+      difficulty,
+    });
+  };
+
   return (
     <>
       <ToastAlert message={errorMessage} onClose={() => setErrorMessage("")} />
@@ -243,6 +252,7 @@ export default function Lobby({
           isConnected={isConnected}
           onStartRace={handleStartRace}
           onCustomizationChange={handleCustomizationChange}
+          onDifficultyChange={handleDifficultyChange}
           onLeaveRoom={handleLeaveRoom}
           onCopyRoomLink={handleCopyRoomLink}
           roomLinkCopied={roomLinkCopied}

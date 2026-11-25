@@ -33,10 +33,11 @@ export default function WaitingRoom({
   onLeaveRoom,
   onCopyRoomLink,
   roomLinkCopied,
+  onDifficultyChange,
 }) {
   const players = Object.values(room.players || {});
   const isHost = room.hostId === playerId;
-  const [difficulty, setDifficulty] = useState("Iniciante");
+  const [difficulty, setDifficulty] = useState(room.difficulty || "Iniciante");
 
   return (
     <main className="min-h-screen bg-[#FFF8F0] px-4 py-5 text-[#1E242B] sm:px-6 sm:py-7">
@@ -83,29 +84,36 @@ export default function WaitingRoom({
             >
               {roomLinkCopied ? "Link copiado!" : "Copiar Link"}
             </button>
-            <fieldset>
-              <legend className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-500">
-                DIFICULDADE
-              </legend>
-              <div className="grid grid-cols-3 rounded-lg bg-[#F4F5F6] p-1">
-                {["Iniciante", "Intermediário", "Programador"].map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setDifficulty(option)}
-                    disabled={!isHost}
-                    aria-pressed={difficulty === option}
-                    className={`cursor-pointer rounded-md px-2 py-2 text-xs font-semibold transition disabled:cursor-not-allowed sm:text-sm ${
-                      difficulty === option
-                        ? "bg-white text-[#1E242B] shadow-sm"
-                        : "text-slate-500 hover:text-[#1E242B]"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
+            {isHost && (
+              <fieldset>
+                <legend className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-500">
+                  DIFICULDADE
+                </legend>
+                <div className="grid grid-cols-3 rounded-lg bg-[#F4F5F6] p-1">
+                  {["Iniciante", "Intermediário", "Programador"].map(
+                    (option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setDifficulty(option);
+                          onDifficultyChange?.(option);
+                        }}
+                        disabled={!isHost}
+                        aria-pressed={difficulty === option}
+                        className={`cursor-pointer rounded-md px-2 py-2 text-xs font-semibold transition disabled:cursor-not-allowed sm:text-sm ${
+                          difficulty === option
+                            ? "bg-white text-[#1E242B] shadow-sm"
+                            : "text-slate-500 hover:text-[#1E242B]"
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ),
+                  )}
+                </div>
+              </fieldset>
+            )}
           </div>
         </section>
 

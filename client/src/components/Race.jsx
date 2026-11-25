@@ -24,6 +24,7 @@ export default function Race({
     currentPlayer?.isFinished ? currentPlayer.wpm : null,
   );
   const [errorCount, setErrorCount] = useState(currentPlayer?.errors || 0);
+  const [clockTick, setClockTick] = useState(Date.now());
   const screenRef = useRef(null);
   const errorCountRef = useRef(currentPlayer?.errors || 0);
   const startTime = race?.startTime;
@@ -38,6 +39,12 @@ export default function Race({
     return () => clearInterval(intervalId);
   }, [startTime, isFinished]);
 
+  useEffect(() => {
+    if (!room.raceEndAt) return undefined;
+    const intervalId = setInterval(() => setClockTick(Date.now()), 100);
+    return () => clearInterval(intervalId);
+  }, [room.raceEndAt]);
+
   const handleInputChange = (event) => {
     if (isFinished || countdownSeconds !== null || !startTime) return;
 
@@ -50,10 +57,17 @@ export default function Race({
     setUserInput(nextInput);
 
     let newErrors = 0;
-    for (let index = 0; index < nextInput.length; index += 1) {
-      if (nextInput[index] !== targetText[index]) newErrors += 1;
+    const maximumLength = Math.max(userInput.length, nextInput.length);
+    for (let index = 0; index < maximumLength; index += 1) {
+      if (
+        userInput[index] !== nextInput[index] &&
+        nextInput[index] !== undefined &&
+        nextInput[index] !== targetText[index]
+      ) {
+        newErrors += 1;
+      }
     }
-    const nextErrorCount = newErrors;
+    const nextErrorCount = errorCountRef.current + newErrors;
     errorCountRef.current = nextErrorCount;
     setErrorCount(nextErrorCount);
 
@@ -81,7 +95,9 @@ export default function Race({
   const ranking = [...players].sort(
     (first, second) => (second.progress || 0) - (first.progress || 0),
   );
-  const remainingSeconds = room.finishSecondsRemaining ?? null;
+  const remainingSeconds = room.raceEndAt
+    ? Math.max(0, Math.ceil((room.raceEndAt - clockTick) / 1000))
+    : null;
   const totalSeconds = Math.floor(elapsedMs / 1000);
   const elapsedTime = `${String(Math.floor(totalSeconds / 60)).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
 
@@ -186,18 +202,25 @@ export default function Race({
                   );
                 })}
               </ol>
-              {isHost && remainingSeconds !== null && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    socket.emit("extend_race_timer", {
-                      roomCode: race.roomCode || room.code,
-                    })
-                  }
-                  className="mt-3 rounded-lg bg-[#FF6B2B] px-3 py-2 text-xs font-bold text-white"
-                >
-                  Adicionar 10 segundos
-                </button>
+              {remainingSeconds !== null && (
+                <div className="mt-3 flex items-center justify-between rounded-lg bg-[#FFF8F0] px-3 py-2">
+                  <span className="text-xs font-bold text-[#64748B]">
+                    Encerrando em {remainingSeconds}s
+                  </span>
+                  {isHost && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        socket.emit("add_race_time", {
+                          roomCode: race.roomCode || room.code,
+                        })
+                      }
+                      className="rounded-lg bg-[#FF6B2B] px-3 py-2 text-xs font-bold text-white"
+                    >
+                      +10s
+                    </button>
+                  )}
+                </div>
               )}
             </section>
           </aside>

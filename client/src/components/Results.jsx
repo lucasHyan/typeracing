@@ -1,110 +1,224 @@
-import { formatRaceTime, getRandomRaceText } from '../utils/gamePresentation';
-import socket from '../services/socket';
-import { getPlayerId } from '../utils/playerIdentity';
+import { getRandomRaceText } from "../utils/gamePresentation";
+import socket from "../services/socket";
+import { getPlayerId } from "../utils/playerIdentity";
+
+function PodiumCar({ color }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 72 48"
+      className="h-12 w-[72px]"
+      fill="none"
+    >
+      <path
+        d="M10 28.5c0-2 1.4-3.7 3.4-4.1l6.3-1.3 7.1-9.2a6 6 0 0 1 4.8-2.4h9a6 6 0 0 1 4.7 2.3l7.5 9.3 6.1 1.3a5 5 0 0 1 4 4.9v3.2a3.5 3.5 0 0 1-3.5 3.5H13.5a3.5 3.5 0 0 1-3.5-3.5v-4Z"
+        fill={color}
+      />
+      <path
+        d="m24 22.5 5.2-6.7a3 3 0 0 1 2.4-1.2h3.1v7.9H24Zm13.7-7.9h2.9a3 3 0 0 1 2.4 1.2l5.4 6.7H37.7v-7.9Z"
+        fill="white"
+      />
+      <circle cx="23" cy="34.5" r="7.5" fill="#1E242B" />
+      <circle cx="53" cy="34.5" r="7.5" fill="#1E242B" />
+    </svg>
+  );
+}
 
 export default function Results({ room, onLeaveRoom }) {
   const isHost = room.hostId === getPlayerId();
-  const results = room.results || [];
+  const results = [...(room.results || [])].sort((first, second) => {
+    if (first.isFinished !== second.isFinished)
+      return first.isFinished ? -1 : 1;
+    if (first.isFinished && second.isFinished)
+      return (first.elapsedMs || 0) - (second.elapsedMs || 0);
+    return (second.progress || 0) - (first.progress || 0);
+  });
+  const difficultyLabel = room.difficulty || "Intermediário";
+  const firstPlace = results[0];
+  const secondPlace = results[1];
+  const thirdPlace = results[2];
 
   const handleStartAnotherRace = () => {
-    socket.emit('start_another_race', {
+    socket.emit("return_to_lobby", {
       roomCode: room.code,
       targetText: getRandomRaceText(room.targetText),
     });
   };
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
-      <section className="w-full max-w-2xl space-y-6 rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl sm:p-9">
-        <header className="text-center">
-          <p className="text-xs font-bold tracking-widest text-sky-400">
-            RESULTADO DA SALA {room.code}
+  const handleExportCsv = () => {
+    const escapeCsvValue = (value) =>
+      `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const rows = [
+      ["Posição", "Nome", "PPM", "Erros", "Tempo Final"],
+      ...results.map((player, index) => [
+        index + 1,
+        player.name,
+        player.wpm || 0,
+        player.errors || 0,
+        player.isFinished
+          ? formatRaceTime(player.elapsedMs)
+          : `${player.progress || 0}%`,
+      ]),
+    ];
+    const csvContent = rows
+      .map((row) => row.map(escapeCsvValue).join(","))
+      .join("\n");
+    const blob = new Blob([`\uFEFF${csvContent}`], {
+      type: "text/csv;charset=utf-8",
+    });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `typeracing-${room.code}-resultados.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const renderPodiumCard = (player, place) => {
+    if (!player) return null;
+    const isFirst = place === 1;
+    const isSecond = place === 2;
+    const errors = player.errors || 0;
+
+    return (
+      <div
+        className={`flex flex-col items-center ${isFirst ? "md:-mt-6" : ""}`}
+      >
+        <div className="mb-1">
+          <PodiumCar color={player.color || "#2563eb"} />
+        </div>
+        <section
+          className={`relative flex w-full flex-col items-center justify-center rounded-2xl border text-center ${isFirst ? "h-56 border-[#FFB703] bg-[#FFB703]" : isSecond ? "h-44 border-slate-200 border-t-4 border-t-[#00A8E8] bg-white" : "h-36 border-slate-200 border-t-4 border-t-[#FF6B2B] bg-white"}`}
+        >
+          <span
+            className={`absolute -top-5 grid h-11 w-11 place-items-center rounded-full border-4 border-white text-sm font-black ${isFirst ? "bg-[#FFF8F0] text-[#1E242B]" : "bg-[#FFF8F0] text-[#64748B]"}`}
+          >
+            {place}º
+          </span>
+          <p
+            className={`${isFirst ? "mt-1 text-lg" : "mt-2 text-sm"} font-extrabold text-[#1E242B]`}
+          >
+            {player.name}
           </p>
-          <h1 className="mt-2 text-3xl font-extrabold">Corrida finalizada!</h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Confira a colocação de cada jogador.
+          <strong
+            className={`${isFirst ? "mt-1 text-4xl" : "mt-2 text-2xl"} font-black text-[#1E242B]`}
+          >
+            {player.wpm || 0} PPM
+          </strong>
+          <div className="mt-3 grid grid-cols-3 gap-1 px-2">
+            <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-bold text-[#1E242B]">
+              {player.progress || 0}%
+            </span>
+            <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-bold text-[#1E242B]">
+              {formatFinalTime(player.elapsedMs)}
+            </span>
+            <span
+              className={`rounded-full px-2 py-1 text-[10px] font-bold ${errors === 0 ? "bg-white text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]"}`}
+            >
+              {errors} {errors === 1 ? "erro" : "erros"}
+            </span>
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  function formatFinalTime(milliseconds = 0) {
+    const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  }
+
+  return (
+    <main className="h-screen overflow-hidden bg-[#FFF8F0] px-4 py-3 text-[#1E242B] sm:px-6">
+      <header className="mx-auto flex h-14 max-w-[1280px] items-center justify-between">
+        <div className="flex items-center text-2xl font-extrabold tracking-tight">
+          <img
+            src="/logo_small.png"
+            alt=""
+            className="mr-2 h-9 w-9 object-contain"
+          />
+          <span>
+            Type<span className="text-[#FF6B2B]">Racing</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold">
+          <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
+          Servidor Online
+        </div>
+      </header>
+
+      <div className="mx-auto flex h-[calc(100vh-68px)] max-w-4xl flex-col items-center">
+        <header className="pt-1 text-center">
+          <h1 className="text-3xl font-extrabold sm:text-4xl">
+            Pódio da Corrida!
+          </h1>
+          <p className="mt-2 text-sm text-[#64748B]">
+            Sala {room.code} • Dificuldade: {difficultyLabel}
           </p>
         </header>
 
-        <ol className="space-y-3">
-          {results.map((player, index) => (
-            <li
-              key={player.id}
-              className="flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3"
-            >
-              <span className="w-10 text-center text-xl font-black text-amber-300">
-                {index + 1}º
-              </span>
-              <span
-                className="shrink-0 text-2xl"
-                aria-hidden="true"
-              >
-                {player.emoji || '🚗'}
-              </span>
-              <span
-                className="h-4 w-4 shrink-0 rounded-full"
-                style={{ backgroundColor: player.color || '#2563eb' }}
-              />
-              <span className="min-w-0 flex-1 truncate font-semibold">
-                {player.name}
-                {player.id === room.hostId && (
-                  <span className="ml-2 text-xs font-normal text-amber-300">
-                    Dono da sala
-                  </span>
-                )}
-              </span>
-              <span className="text-right text-sm tabular-nums text-slate-300">
-                <span className="block font-semibold text-sky-300">
-                  {player.wpm || 0} PPM
-                </span>
-                <span className="block">
-                  {player.isFinished
-                    ? formatRaceTime(player.elapsedMs)
-                    : `${player.progress || 0}%`}
-                </span>
-                <span className="block text-xs text-slate-400">
-                  {player.errors || 0} erros
-                </span>
-              </span>
-            </li>
-          ))}
-        </ol>
+        <section className="mt-8 grid w-full grid-cols-3 items-end gap-3 px-2 sm:gap-5">
+          {results.length >= 2 ? renderPodiumCard(secondPlace, 2) : <div />}
+          {renderPodiumCard(firstPlace, 1)}
+          {results.length >= 3 ? renderPodiumCard(thirdPlace, 3) : <div />}
+        </section>
 
-        {isHost ? (
+        {results.length >= 4 && (
+          <section className="mt-5 w-full rounded-2xl border border-[#E9DCCB] bg-white px-4 py-3">
+            {results.slice(3).map((player, index) => (
+              <div
+                key={player.id}
+                className="flex items-center justify-center gap-2 text-center text-xs font-semibold sm:text-sm"
+              >
+                <span>
+                  {String(index + 4).padStart(2, "0")} • {player.name}
+                </span>
+                <span>
+                  — {player.wpm || 0} PPM • {player.progress || 0}% •{" "}
+                  {formatFinalTime(player.elapsedMs)} • {player.errors || 0}{" "}
+                  {(player.errors || 0) === 1 ? "erro" : "erros"}
+                </span>
+              </div>
+            ))}
+          </section>
+        )}
+
+        <footer className="mt-auto flex flex-col items-center pb-4 pt-5">
+          {isHost ? (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleStartAnotherRace}
+                className="rounded-xl bg-[#FF6B2B] px-8 py-3.5 font-bold text-white transition hover:bg-[#E55A1F]"
+              >
+                Jogar Novamente
+              </button>
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                className="rounded-xl border-2 border-[#00A8E8] bg-white px-8 py-3.5 font-bold text-[#00A8E8] transition hover:bg-[#F0FAFF]"
+              >
+                Exportar CSV
+              </button>
+            </div>
+          ) : (
+            <p className="text-sm font-medium text-[#64748B]">
+              Aguardando o dono da sala...
+            </p>
+          )}
           <button
             type="button"
-            onClick={handleStartAnotherRace}
-            className="w-full rounded-xl bg-emerald-600 px-5 py-3.5 font-bold text-white transition hover:bg-emerald-500 active:scale-[0.99]"
+            onClick={onLeaveRoom}
+            className="mt-4 text-sm font-medium text-[#64748B] transition hover:text-[#1E242B]"
           >
-            Começar outra partida
+            ← Voltar à tela inicial
           </button>
-        ) : (
-          <p className="rounded-lg border border-dashed border-slate-700 px-4 py-3 text-center text-sm text-slate-400">
-            Aguardando o dono da sala iniciar outra partida...
-          </p>
-        )}
-        {isHost && (
-          <button
-            type="button"
-            onClick={() =>
-              socket.emit('return_to_lobby', {
-                roomCode: room.code,
-                targetText: getRandomRaceText(room.targetText),
-              })
-            }
-            className="w-full rounded-xl border border-sky-500/50 px-5 py-3 font-bold text-sky-300 transition hover:bg-sky-500/10"
-          >
-            Voltar ao lobby
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onLeaveRoom}
-          className="w-full rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
-        >
-          Voltar à tela inicial
-        </button>
-      </section>
+        </footer>
+      </div>
     </main>
   );
 }
