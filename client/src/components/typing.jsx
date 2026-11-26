@@ -18,7 +18,7 @@ export default function Typing() {
     getRandomParagraph(paragraphs),
   );
   const [userInput, setUserInput] = useState("");
-  const [playerName, setPlayerName] = useState("Aluno");
+  const [playerName, setPlayerName] = useState("Jogador");
   const [carColor, setCarColor] = useState("#2563eb");
   const [startTimeMs, setStartTimeMs] = useState(null);
   const [elapsedMs, setElapsedMs] = useState(0);

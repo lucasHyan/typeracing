@@ -24,6 +24,12 @@ const DEFAULT_TEXT = "Programar todos os dias melhora sua lógica e velocidade."
 const RACE_START_COUNTDOWN_SECONDS = 3;
 const FINISH_COUNTDOWN_MS = 20_000;
 const FINISH_TIME_EXTENSION_MS = 10_000;
+const MAX_PLAYERS_PER_ROOM = 15;
+// Prazo para reconectar (ex.: F5) depois de fechar/perder a aba sem clicar em "Sair".
+const RECONNECT_GRACE_WAITING_MS = 5_000;
+const RECONNECT_GRACE_RACING_MS = 15_000;
+// playerId -> timeout de remoção pendente.
+const disconnectTimers = new Map();
 const VEHICLE_EMOJIS = new Set([
   "🚗",
   "🏎️",
@@ -288,6 +294,51 @@ function startFinishTimer(room) {
   scheduleFinishTimer(room);
 }
 
+function clearDisconnectTimer(playerId) {
+  const timeoutId = disconnectTimers.get(playerId);
+  if (timeoutId) clearTimeout(timeoutId);
+  disconnectTimers.delete(playerId);
+}
+
+// Encerra a sala para todos (dono saiu ou não voltou a tempo).
+function closeRoom(room, message) {
+  io.to(room.code).emit("room_closed", message);
+  clearStartCountdown(room);
+  clearFinishTimer(room);
+  Object.keys(room.players).forEach(clearDisconnectTimer);
+  io.socketsLeave(room.code);
+  delete rooms[room.code];
+}
+
+// Remove um jogador da sala (clicou em "Sair" ou não reconectou no prazo).
+// Se for o dono, a sala é encerrada para todos.
+function removePlayerFromRoom(room, playerId, hostLeftMessage) {
+  clearDisconnectTimer(playerId);
+  if (!room.players[playerId]) return;
+
+  if (room.hostId === playerId) {
+    closeRoom(room, hostLeftMessage);
+    return;
+  }
+
+  const { socketId } = room.players[playerId];
+  delete room.players[playerId];
+  io.sockets.sockets.get(socketId)?.leave(room.code);
+
+  if (Object.keys(room.players).length === 0) {
+    clearStartCountdown(room);
+    clearFinishTimer(room);
+    delete rooms[room.code];
+    return;
+  }
+
+  io.to(room.code).emit("update_players", {
+    roomCode: room.code,
+    players: getPublicPlayerList(room),
+  });
+  finishRaceIfReady(room);
+}
+
 function finishRaceIfReady(room) {
   const players = getRoomPlayerList(room);
   if (
@@ -356,6 +407,8 @@ io.on("connection", (socket) => {
     if (!room) return;
 
     const player = room.players[playerId];
+    // Voltou dentro do prazo: cancela a remoção pendente.
+    clearDisconnectTimer(playerId);
     if (player.socketId && player.socketId !== socket.id) {
       const previousSocket = io.sockets.sockets.get(player.socketId);
       if (previousSocket) {
@@ -440,6 +493,13 @@ io.on("connection", (socket) => {
       socket.emit(
         "error_message",
         "Sala não encontrada ou indisponível para entrada.",
+      );
+      return;
+    }
+    if (Object.keys(room.players).length >= MAX_PLAYERS_PER_ROOM) {
+      socket.emit(
+        "error_message",
+        `A sala está cheia (máximo de ${MAX_PLAYERS_PER_ROOM} jogadores).`,
       );
       return;
     }
@@ -671,33 +731,12 @@ io.on("connection", (socket) => {
     const playerId = socket.data.playerId;
     if (!room || !getSocketPlayer(socket, room)) return;
 
-    if (room.hostId === playerId) {
-      io.to(roomCode).emit(
-        "room_closed",
-        "O dono da sala saiu. A sala foi encerrada.",
-      );
-      clearStartCountdown(room);
-      clearFinishTimer(room);
-      delete rooms[roomCode];
-      socket.leave(roomCode);
-      return;
-    }
-
-    delete room.players[playerId];
     socket.leave(roomCode);
-    io.to(roomCode).emit("update_players", {
-      roomCode,
-      players: getPublicPlayerList(room),
-    });
-
-    if (Object.keys(room.players).length === 0) {
-      clearStartCountdown(room);
-      clearFinishTimer(room);
-      delete rooms[roomCode];
-      return;
-    }
-
-    finishRaceIfReady(room);
+    removePlayerFromRoom(
+      room,
+      playerId,
+      "O dono da sala saiu. A sala foi encerrada.",
+    );
   });
 
   socket.on("update_room_difficulty", (data = {}) => {
@@ -762,8 +801,37 @@ io.on("connection", (socket) => {
     });
   });
 
+  // Fechou a aba / caiu a conexão sem clicar em "Sair": espera um prazo para
+  // reconexão (F5) e, se não voltar, remove o jogador (ou encerra a sala, se for o dono).
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${socket.id}`);
+    const playerId = socket.data.playerId;
+    if (!playerId) return;
+    const room = findPlayerRoom(playerId);
+    // Se já reconectou por outro socket, não há o que fazer.
+    if (!room || room.players[playerId].socketId !== socket.id) return;
+
+    const graceMs =
+      room.status === "waiting"
+        ? RECONNECT_GRACE_WAITING_MS
+        : RECONNECT_GRACE_RACING_MS;
+
+    clearDisconnectTimer(playerId);
+    disconnectTimers.set(
+      playerId,
+      setTimeout(() => {
+        disconnectTimers.delete(playerId);
+        const currentRoom = rooms[room.code];
+        const player = currentRoom?.players[playerId];
+        // Só remove se continuar desconectado (não voltou com outro socket).
+        if (!player || player.socketId !== socket.id) return;
+        removePlayerFromRoom(
+          currentRoom,
+          playerId,
+          "O dono da sala desconectou. A sala foi encerrada.",
+        );
+      }, graceMs),
+    );
   });
 });
 

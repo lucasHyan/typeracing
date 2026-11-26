@@ -16,12 +16,19 @@ const CHECKER_PATTERN = {
 };
 
 export default function RaceTrack({ players, currentPlayerId }) {
+  // Você sempre na primeira raia; os demais mantêm a ordem de entrada na sala
+  // (a pista não reordena por progresso; isso fica no Ranking ao Vivo).
+  const lanes = [
+    ...players.filter((player) => player.id === currentPlayerId),
+    ...players.filter((player) => player.id !== currentPlayerId),
+  ];
+
   return (
     <div>
       <div className="max-h-[264px] overflow-y-auto">
         <div className="relative">
           <ol>
-            {players.map((player) => {
+            {lanes.map((player) => {
               const progress = Math.max(0, Math.min(100, player.progress || 0));
               const isCurrent = player.id === currentPlayerId;
               const alignLabelRight = progress > LABEL_FLIP_PROGRESS;

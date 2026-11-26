@@ -123,10 +123,10 @@ print("Largada!")`,
   background: #ff6b2b;
   border-radius: 8px;
 }`,
-    `SELECT nome, nota
-FROM alunos
-WHERE nota >= 7
-ORDER BY nota DESC;`,
+    `SELECT nome, pontos
+FROM jogadores
+WHERE pontos >= 70
+ORDER BY pontos DESC;`,
   ],
 };
 

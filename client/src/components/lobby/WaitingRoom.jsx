@@ -73,7 +73,7 @@ export default function WaitingRoom({
               Jogadores conectados
             </h2>
             <p className="theme-secondary text-sm font-semibold">
-              {players.length} na sala
+              {players.length}/15 na sala
             </p>
           </header>
           <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
@@ -144,7 +144,7 @@ export default function WaitingRoom({
             </button>
           ) : (
             <p className="theme-secondary text-center text-base font-medium">
-              Aguardando o professor iniciar a partida...
+              Aguardando o dono da sala iniciar a partida...
             </p>
           )}
           <button
