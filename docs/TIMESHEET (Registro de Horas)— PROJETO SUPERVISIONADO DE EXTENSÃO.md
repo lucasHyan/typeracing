@@ -29,23 +29,25 @@
 | Requisitos | 18/11/2026 | 18/11/2026 | 0,5 | Alinhamento final via WhatsApp com a coordenação da Ctrl+Play Vila Ré para confirmação da visita presencial de 28/11/2026 e logística de aplicação piloto | S | https://docs.google.com/document/d/1yURsbpE2Qp9_54O5V9HYyZbhOFmqY8k209iaQLL8r5I/edit#18-11-alinhamento | Lucas Hyan | Confirmação operacional junto à coordenação pedagógica definindo os detalhes da aplicação presencial com os alunos no sábado, 28/11/2026. |
 | Planejamento/design | 18/11/2026 | 18/11/2026 | 2,5 | Criação da identidade visual editorial de alto contraste (paleta #FFF8F0, #FF6B2B, #00A8E8 e #FFB703) e prototipação dos frames desktop no Figma | N | https://www.figma.com/design/yMeQFFgR9j3nSHt6lkswA0/TypeRacing---UI-Design?node-id=0-1 | Lucas Hyan | Redesign orientado a legibilidade em projetor escolar, separação semântica de cores e prototipação das 4 telas (Início, Sala de Espera, Corrida em Tela Única e Pódio). |
 | Desenvolvimento | 18/11/2026 | 18/11/2026 | 2,5 | Refatoração completa da Tela Inicial (`LobbyEntry.jsx`) com layout aberto editorial, barra unificada de piloto e cor, entrada inline por PIN e novos logos | N | https://github.com/lucasHyan/typeracing/commit/0f4d100 | Lucas Hyan | Implementação fiel ao protótipo do Figma (commits `73437ac` e `0f4d100`), integração de `logo_small.png` e `logo.png` e publicação na Vercel (`typeracing-two.vercel.app`). |
-| Planejamento/design | 24/11/2026 | 24/11/2026 | 2,0 | Prototipação e refinamento visual da tela de Pódio e Resultados (estilo Kahoot) no Figma com métricas pedagógicas de PPM e contagem de erros | N | https://www.figma.com/design/yMeQFFgR9j3nSHt6lkswA0/TypeRacing---UI-Design | Lucas Hyan | Bloco inicial da sessão de 24/11. Fechamento do fluxo completo de 4 telas de alta fidelidade voltadas para projeção em sala de aula. |
-| Desenvolvimento | 24/11/2026 | 24/11/2026 | 5,0 | Implementação da tela única de corrida, pódio escalonado, controle de permissões do anfitrião e timer autoritativo de encerramento (20s + botão +10s) | N | https://github.com/lucasHyan/typeracing/commit/f169669 | Lucas Hyan | Sessão de desenvolvimento e debug (commits `24ed665` e `f169669`). Congelamento individual de tempo/PPM ao concluir, retorno coletivo ao lobby e exibição completa de métricas no pódio. |
+| Planejamento/design | 24/11/2026 | 24/11/2026 | 1,0 | Prototipação da tela "04 - Pódio e Resultados" em estilo Kahoot no Figma, fechando o fluxo visual das 4 telas do sistema | N | https://www.figma.com/design/yMeQFFgR9j3nSHt6lkswA0/TypeRacing---UI-Design | Lucas Hyan | Bloco inicial da sessão de 24/11. Fechamento do protótipo navegável na paleta editorial voltada para projeção em sala de aula. |
+| Desenvolvimento | 24/11/2026 | 24/11/2026 | 6,0 | Estruturação da corrida em tela única, escolha de cor centralizada na sala de espera, botão "Exportar CSV" no pódio e timers autoritativos no servidor (20s + botão +10s) | N | https://github.com/lucasHyan/typeracing/commit/f169669 | Lucas Hyan | Sessão de desenvolvimento (4,5 h no commit `24ed665` + 1,5 h no commit `f169669`). Restrição de dificuldade ao anfitrião, congelamento individual de tempo/PPM e retorno coletivo ao lobby. |
+| Desenvolvimento | 25/11/2026 | 25/11/2026 | 2,5 | Implementação do alternador de tema claro/escuro (`localStorage`), correção de contraste WCAG (Tailwind v4), cabeçalho unificado e sincronização de emojis dos veículos | N | https://github.com/lucasHyan/typeracing/commit/5f7a242 | Lucas Hyan | Bloco 1 (commits `4186dab`, `370b522` e `5f7a242`). Reset de partida entre rodadas, suporte a modo escuro e sincronização de avatar/emoji em tempo real. |
+| Desenvolvimento | 25/11/2026 | 25/11/2026 | 3,0 | Criação do banco de 63 textos por nível (com snippets de código e `Tab`), painel de texto customizado (`Ctrl+V`), bloqueio anti-cola e pódio animado com teclas mais erradas | N | https://github.com/lucasHyan/typeracing/commit/7265075 | Lucas Hyan | Bloco 2 (commit `7265075`). Snippets de JS, Python, HTML, CSS e SQL, evento `update_room_text` no servidor, bloqueio de clipboard, botão de saída e revelação animada do Top 3. |
 
-**TOTAL DE HORAS DECLARADAS:** 58,5 h
+**TOTAL DE HORAS DECLARADAS:** 64,0 h
 
 ### Resumo por etapa
 | Etapa | Horas | % do total |
 | :--- | :--- | :--- |
 | Prospecção | 0 | 0% |
-| Requisitos | 8,5 | 14,5% |
-| Planejamento/design | 9,8 | 16,7% |
-| Desenvolvimento | 34,2 | 58,5% |
-| Testes | 2,5 | 4,3% |
-| Entrega/implantação | 2,5 | 4,3% |
+| Requisitos | 8,5 | 13,3% |
+| Planejamento/design | 8,8 | 13,7% |
+| Desenvolvimento | 40,7 | 63,6% |
+| Testes | 2,5 | 3,9% |
+| Entrega/implantação | 2,5 | 3,9% |
 | Treinamento | 0 | 0% |
-| Documentação | 1,0 | 1,7% |
-| **Total** | **58,5** | **100%** |
+| Documentação | 1,0 | 1,6% |
+| **Total** | **64,0** | **100%** |
 
 ### Resumo de encontros com o cliente (presenciais ou síncronos)
 - **Horas em encontros com o cliente:** 3,0 h

@@ -5,6 +5,7 @@ import { getPlayerId } from "../utils/playerIdentity";
 import LobbyEntry from "./lobby/LobbyEntry";
 import { COLOR_PRESETS } from "./lobby/constants";
 import WaitingRoom from "./lobby/WaitingRoom";
+import JoinFromLink from "./lobby/JoinFromLink";
 import TypingPage from "../pages/TypingPage.jsx";
 
 function ToastAlert({ message, onClose }) {
@@ -48,7 +49,24 @@ export default function Lobby({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roomLinkCopied, setRoomLinkCopied] = useState(false);
   const [isSoloMode, setIsSoloMode] = useState(false);
+  // Código vindo do link compartilhado: mostra a tela de convite (só nome + entrar).
+  const [inviteCode, setInviteCode] = useState(() => {
+    const code = roomCodeFromLink.toUpperCase();
+    return code.length === 5 ? code : "";
+  });
   const currentRoomRef = useRef(initialRoom);
+  const isInviteScreen = Boolean(inviteCode) && !currentRoom && !isSoloMode;
+
+  // Tira o ?roomCode da URL para que, ao sair da sala, o jogador caia na tela inicial.
+  const clearInviteLink = () => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("roomCode")) {
+      url.searchParams.delete("roomCode");
+      window.history.replaceState(null, "", url.toString());
+    }
+    setInviteCode("");
+  };
+  const clearInviteLinkRef = useRef(clearInviteLink);
 
   useEffect(() => {
     const setRoom = (room) => {
@@ -58,6 +76,7 @@ export default function Lobby({
     };
 
     const handleRoomJoined = ({ roomCode, room }) => {
+      clearInviteLinkRef.current();
       setRoom(room || { code: roomCode });
       setErrorMessage("");
       setIsSubmitting(false);
@@ -139,10 +158,11 @@ export default function Lobby({
   }, [onRoomDataChange]);
 
   useEffect(() => {
-    if (!errorMessage) return undefined;
+    // Na tela de convite o erro fica visível até a próxima tentativa.
+    if (!errorMessage || isInviteScreen) return undefined;
     const timeoutId = setTimeout(() => setErrorMessage(""), 4500);
     return () => clearTimeout(timeoutId);
-  }, [errorMessage]);
+  }, [errorMessage, isInviteScreen]);
 
   const handleCreateRoom = () => {
     const name = playerName.trim();
@@ -176,6 +196,7 @@ export default function Lobby({
     }
     if (!isConnected || isSubmitting) return;
 
+    setErrorMessage("");
     setIsSubmitting(true);
     socket.emit("join_room", {
       roomCode,
@@ -267,7 +288,9 @@ export default function Lobby({
 
   return (
     <>
-      <ToastAlert message={errorMessage} onClose={() => setErrorMessage("")} />
+      {!isInviteScreen && (
+        <ToastAlert message={errorMessage} onClose={() => setErrorMessage("")} />
+      )}
       {isSoloMode ? (
         <main className="min-h-screen bg-[#FFF8F0] px-4 py-6 text-[#1E242B]">
           <button
@@ -291,6 +314,22 @@ export default function Lobby({
           onLeaveRoom={handleLeaveRoom}
           onCopyRoomLink={handleCopyRoomLink}
           roomLinkCopied={roomLinkCopied}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+        />
+      ) : isInviteScreen ? (
+        <JoinFromLink
+          roomCode={inviteCode}
+          playerName={playerName}
+          onPlayerNameChange={setPlayerName}
+          onJoinRoom={handleJoinRoom}
+          isBusy={!isConnected || isSubmitting}
+          isConnected={isConnected}
+          errorMessage={errorMessage}
+          onGoHome={() => {
+            clearInviteLink();
+            setErrorMessage("");
+          }}
           theme={theme}
           onToggleTheme={onToggleTheme}
         />

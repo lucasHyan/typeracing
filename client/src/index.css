@@ -67,8 +67,6 @@
     font: inherit;
   }
 
-  /* Sem contorno azul ao clicar. Campos de texto já mostram foco pela própria borda;
-     botões e links mostram um anel laranja apenas na navegação por teclado. */
   :focus {
     outline: none;
   }
