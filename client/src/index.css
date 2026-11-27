@@ -67,6 +67,16 @@
     font: inherit;
   }
 
+  /* Tailwind v4 não muda o cursor dos botões: mãozinha em todo botão clicável. */
+  button:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
   :focus {
     outline: none;
   }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function TypingArea({
   targetText,
@@ -11,6 +11,43 @@ export default function TypingArea({
   isCode = false,
 }) {
   const inputRef = useRef(null);
+  // Acentos (´ ~ ^ `) usam "tecla morta": o navegador abre uma composição e o ´
+  // fica pendente até a próxima tecla. Enquanto compõe, só mostramos o texto no
+  // campo; a validação acontece quando a letra final (é, ã, ô...) é confirmada.
+  const [composingValue, setComposingValue] = useState(null);
+  const committedCompositionRef = useRef(null);
+
+  const handleCompositionStart = () => setComposingValue(userInput);
+
+  const handleCompositionEnd = (event) => {
+    const finalValue = event.currentTarget.value;
+    setComposingValue(null);
+    committedCompositionRef.current = finalValue;
+    setTimeout(() => {
+      if (committedCompositionRef.current === finalValue) {
+        committedCompositionRef.current = null;
+      }
+    }, 50);
+    onInputChange({
+      target: { value: finalValue },
+      nativeEvent: { inputType: "insertCompositionText" },
+    });
+  };
+
+  const handleChange = (event) => {
+    if (composingValue !== null || event.nativeEvent?.isComposing) {
+      setComposingValue(event.target.value);
+      return;
+    }
+    // Alguns navegadores (Firefox) disparam mais um input logo após o
+    // compositionend com o mesmo valor, que já foi processado.
+    if (committedCompositionRef.current === event.target.value) {
+      committedCompositionRef.current = null;
+      return;
+    }
+    committedCompositionRef.current = null;
+    onInputChange(event);
+  };
 
   useEffect(() => {
     if (!isFinished && raceStartTime) {
@@ -103,8 +140,10 @@ export default function TypingArea({
           ref={inputRef}
           rows={isCode ? 5 : 1}
           onKeyDown={handleKeyDown}
-          value={userInput}
-          onChange={onInputChange}
+          value={composingValue ?? userInput}
+          onChange={handleChange}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
           disabled={isFinished}
           maxLength={targetText.length}
           placeholder={isFinished ? "Corrida concluída!" : ""}

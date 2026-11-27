@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import VehicleCustomizer from "./VehicleCustomizer";
+import { playSound } from "../../services/sound.js";
 import RaceTextPanel from "./RaceTextPanel";
 import { COLOR_PRESETS } from "./constants";
 import AppHeader from "../AppHeader.jsx";
@@ -21,12 +23,28 @@ export default function WaitingRoom({
   const players = Object.values(room.players || {});
   const isHost = room.hostId === playerId;
 
+  // Som de entrada/saída de jogador (só no PC do dono da sala).
+  const previousCountRef = useRef(players.length);
+  useEffect(() => {
+    const previousCount = previousCountRef.current;
+    previousCountRef.current = players.length;
+    if (players.length > previousCount) playSound("playerJoined", { isHost });
+    else if (players.length < previousCount)
+      playSound("playerLeft", { isHost });
+  }, [players.length, isHost]);
+
   return (
     <main className="theme-main min-h-screen px-4 pb-8 pt-3 sm:px-6">
       <AppHeader
         theme={theme}
         onToggleTheme={onToggleTheme}
         isConnected={isConnected}
+        onHome={() => {
+          const message = isHost
+            ? "Você é o dono da sala: sair encerra a sala para todos. Voltar à tela inicial?"
+            : "Sair da sala e voltar à tela inicial?";
+          if (window.confirm(message)) onLeaveRoom?.();
+        }}
       />
 
       <section className="mx-auto mt-8 w-full max-w-4xl space-y-8 pb-8">

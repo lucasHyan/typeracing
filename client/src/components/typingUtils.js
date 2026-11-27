@@ -1,8 +1,3 @@
-export const getRandomParagraph = (paragraphs) => {
-  const index = Math.floor(Math.random() * paragraphs.length);
-  return paragraphs[index];
-};
-
 const findFirstChangedIndex = (currentInput, nextInput) => {
   let index = 0;
 

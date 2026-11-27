@@ -3,6 +3,7 @@ import LobbyPage from "./pages/LobbyPage.jsx";
 import RacePage from "./pages/RacePage.jsx";
 import ResultsPage from "./pages/ResultsPage.jsx";
 import socket from "./services/socket.js";
+import { playSound } from "./services/sound.js";
 import { playersById } from "./utils/gamePresentation.js";
 import { getPlayerId } from "./utils/playerIdentity.js";
 
@@ -47,6 +48,7 @@ function App() {
   }, []);
 
   const handleLeaveRoom = useCallback(() => {
+    playSound("leave");
     if (room?.code) {
       socket.emit("leave_room", { roomCode: room.code });
     }
@@ -170,6 +172,7 @@ function App() {
     };
 
     const handleRoomClosed = (message) => {
+      playSound("roomClosed");
       setRoom(null);
       setRace(null);
       setRoomMessage(message || "A sala foi encerrada pelo anfitrião.");
@@ -225,12 +228,24 @@ function App() {
     );
   }
 
-  if (room?.status === "racing" && race) {
+  // Quem entra com a corrida em andamento (espectador) não recebe race_started:
+  // monta a corrida a partir dos dados da sala.
+  const activeRace =
+    race ||
+    (room?.status === "racing"
+      ? {
+          roomCode: room.code,
+          targetText: room.targetText,
+          startTime: room.startedAt,
+        }
+      : null);
+
+  if (room?.status === "racing" && activeRace) {
     return (
       <RacePage
-        key={`${room.code}-${race.startTime}-${race.targetText}`}
+        key={`${room.code}-${activeRace.startTime}-${activeRace.targetText}`}
         room={room}
-        race={race}
+        race={activeRace}
         onLeaveRoom={handleLeaveRoom}
         theme={theme}
         onToggleTheme={handleToggleTheme}

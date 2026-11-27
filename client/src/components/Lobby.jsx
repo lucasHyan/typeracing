@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import socket from "../services/socket";
+import { playSound } from "../services/sound.js";
 import { getRandomRaceText, playersById } from "../utils/gamePresentation";
 import { getPlayerId } from "../utils/playerIdentity";
 import LobbyEntry from "./lobby/LobbyEntry";
 import { COLOR_PRESETS } from "./lobby/constants";
 import WaitingRoom from "./lobby/WaitingRoom";
 import JoinFromLink from "./lobby/JoinFromLink";
-import TypingPage from "../pages/TypingPage.jsx";
 
 function ToastAlert({ message, onClose }) {
   if (!message) return null;
@@ -48,14 +48,13 @@ export default function Lobby({
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roomLinkCopied, setRoomLinkCopied] = useState(false);
-  const [isSoloMode, setIsSoloMode] = useState(false);
   // Código vindo do link compartilhado: mostra a tela de convite (só nome + entrar).
   const [inviteCode, setInviteCode] = useState(() => {
     const code = roomCodeFromLink.toUpperCase();
     return code.length === 5 ? code : "";
   });
   const currentRoomRef = useRef(initialRoom);
-  const isInviteScreen = Boolean(inviteCode) && !currentRoom && !isSoloMode;
+  const isInviteScreen = Boolean(inviteCode) && !currentRoom;
 
   // Tira o ?roomCode da URL para que, ao sair da sala, o jogador caia na tela inicial.
   const clearInviteLink = () => {
@@ -75,7 +74,17 @@ export default function Lobby({
       onRoomDataChange?.(room);
     };
 
+    // Criar sala: sem som. Entrar numa sala existente: som de entrada.
+    const handleRoomCreated = ({ roomCode, room }) => {
+      clearInviteLinkRef.current();
+      setRoom(room || { code: roomCode });
+      setErrorMessage("");
+      setIsSubmitting(false);
+      setRoomLinkCopied(false);
+    };
+
     const handleRoomJoined = ({ roomCode, room }) => {
+      playSound("joinedRoom");
       clearInviteLinkRef.current();
       setRoom(room || { code: roomCode });
       setErrorMessage("");
@@ -103,6 +112,7 @@ export default function Lobby({
     };
 
     const handleError = (message) => {
+      playSound("error");
       setErrorMessage(
         typeof message === "string" ? message : "Ocorreu um erro inesperado.",
       );
@@ -126,7 +136,7 @@ export default function Lobby({
       setErrorMessage(message || "A sala foi encerrada pelo dono da sala.");
     };
 
-    socket.on("room_created", handleRoomJoined);
+    socket.on("room_created", handleRoomCreated);
     socket.on("joined_successfully", handleRoomJoined);
     socket.on("player_reconnected", handlePlayerReconnected);
     socket.on("player_joined", handlePlayerJoined);
@@ -141,7 +151,7 @@ export default function Lobby({
     socket.on("room_closed", handleRoomClosed);
 
     return () => {
-      socket.off("room_created", handleRoomJoined);
+      socket.off("room_created", handleRoomCreated);
       socket.off("joined_successfully", handleRoomJoined);
       socket.off("player_reconnected", handlePlayerReconnected);
       socket.off("player_joined", handlePlayerJoined);
@@ -208,6 +218,7 @@ export default function Lobby({
 
   const handleCustomizationChange = (customization) => {
     if (!currentRoom?.code) return;
+    playSound("select");
     // Atualiza o card na hora; o servidor confirma via player_customization_updated
     // (ou reverte o estado enviando o snapshot da sala, caso recuse a mudança).
     const playerId = getPlayerId();
@@ -242,6 +253,7 @@ export default function Lobby({
       await navigator.clipboard.writeText(roomUrl.toString());
       setRoomLinkCopied(true);
       setErrorMessage("");
+      playSound("confirm");
     } catch {
       setRoomLinkCopied(false);
       setErrorMessage(
@@ -291,18 +303,7 @@ export default function Lobby({
       {!isInviteScreen && (
         <ToastAlert message={errorMessage} onClose={() => setErrorMessage("")} />
       )}
-      {isSoloMode ? (
-        <main className="min-h-screen bg-[#FFF8F0] px-4 py-6 text-[#1E242B]">
-          <button
-            type="button"
-            onClick={() => setIsSoloMode(false)}
-            className="mx-auto block rounded-lg border border-[#E9DCCB] bg-white px-4 py-2 text-sm font-bold"
-          >
-            Voltar à tela inicial
-          </button>
-          <TypingPage />
-        </main>
-      ) : currentRoom ? (
+      {currentRoom ? (
         <WaitingRoom
           room={currentRoom}
           playerId={getPlayerId()}
@@ -344,7 +345,6 @@ export default function Lobby({
           onRoomCodeChange={setRoomCodeInput}
           onCreateRoom={handleCreateRoom}
           onJoinRoom={handleJoinRoom}
-          onSoloMode={() => setIsSoloMode(true)}
           theme={theme}
           onToggleTheme={onToggleTheme}
         />

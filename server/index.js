@@ -154,6 +154,8 @@ function createPlayer(id, name, color, socketId) {
     wpm: 0,
     errors: 0,
     missedKeys: {},
+    // Entrou com a corrida em andamento: só assiste e vira jogador quando ela acabar.
+    isSpectator: false,
     isFinished: false,
     elapsedMs: null,
     finishTime: null,
@@ -170,6 +172,7 @@ function resetRoomRaceState(room) {
     player.wpm = 0;
     player.errors = 0;
     player.missedKeys = {};
+    player.isSpectator = false;
     player.isFinished = false;
     player.elapsedMs = null;
     player.finishTime = null;
@@ -200,9 +203,14 @@ function getAccuracy(player) {
   return Math.round((typed / (typed + errors)) * 1000) / 10;
 }
 
+// Jogadores que estão de fato correndo (sem os espectadores).
+function getRacers(room) {
+  return getRoomPlayerList(room).filter((player) => !player.isSpectator);
+}
+
 function getResults(room) {
   const elapsedAtFinish = Date.now() - room.startedAt;
-  const normalizedPlayers = getRoomPlayerList(room).map((player) => {
+  const normalizedPlayers = getRacers(room).map((player) => {
     const elapsedMs = Math.max(
       1,
       player.isFinished ? player.elapsedMs || elapsedAtFinish : elapsedAtFinish,
@@ -260,6 +268,10 @@ function finishRace(room) {
   clearFinishTimer(room);
   room.status = "finished";
   room.results = getResults(room);
+  // Fim da corrida: quem estava assistindo passa a ser jogador da sala.
+  getRoomPlayerList(room).forEach((player) => {
+    player.isSpectator = false;
+  });
   io.to(room.code).emit("race_finished", {
     roomCode: room.code,
     players: getPublicPlayerList(room),
@@ -340,14 +352,11 @@ function removePlayerFromRoom(room, playerId, hostLeftMessage) {
 }
 
 function finishRaceIfReady(room) {
-  const players = getRoomPlayerList(room);
-  if (
-    room.status !== "racing" ||
-    players.length === 0 ||
-    !players.every((player) => player.isFinished)
-  ) {
-    return;
-  }
+  if (room.status !== "racing" || getRoomPlayerList(room).length === 0) return;
+  // Espectadores não contam: encerra quando todos os que correm terminaram
+  // (ou se só sobraram espectadores na sala).
+  const racers = getRacers(room);
+  if (!racers.every((player) => player.isFinished)) return;
 
   finishRace(room);
 }
@@ -489,11 +498,8 @@ io.on("connection", (socket) => {
       return;
     }
 
-    if (!room || room.status !== "waiting") {
-      socket.emit(
-        "error_message",
-        "Sala não encontrada ou indisponível para entrada.",
-      );
+    if (!room) {
+      socket.emit("error_message", "Sala não encontrada.");
       return;
     }
     if (Object.keys(room.players).length >= MAX_PLAYERS_PER_ROOM) {
@@ -510,6 +516,11 @@ io.on("connection", (socket) => {
       cleanColor(data.carColor, "#dc2626"),
       socket.id,
     );
+    // Corrida em andamento: entra como espectador e vira jogador quando ela acabar.
+    // (Na contagem regressiva ainda dá tempo de correr; no pódio ele já é jogador.)
+    if (room.status === "racing") {
+      room.players[playerId].isSpectator = true;
+    }
 
     socket.data.playerId = playerId;
     socket.join(roomCode);
@@ -518,6 +529,11 @@ io.on("connection", (socket) => {
       room: getRoomSnapshot(room),
     });
     io.to(roomCode).emit("player_joined", { room: getRoomSnapshot(room) });
+    // As telas de corrida/pódio escutam update_players (não player_joined).
+    io.to(roomCode).emit("update_players", {
+      roomCode,
+      players: getPublicPlayerList(room),
+    });
   });
 
   socket.on("update_player_customization", (data = {}) => {
@@ -594,7 +610,13 @@ io.on("connection", (socket) => {
     const room = rooms[roomCode];
     const player = getSocketPlayer(socket, room);
 
-    if (!room || room.status !== "racing" || !player || player.isFinished) {
+    if (
+      !room ||
+      room.status !== "racing" ||
+      !player ||
+      player.isFinished ||
+      player.isSpectator
+    ) {
       return;
     }
 

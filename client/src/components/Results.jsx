@@ -1,5 +1,7 @@
 import { formatRaceTime, getNextRaceText } from "../utils/gamePresentation";
+import { useEffect } from "react";
 import socket from "../services/socket";
+import { playSound } from "../services/sound.js";
 import { getPlayerId } from "../utils/playerIdentity";
 import AppHeader from "./AppHeader.jsx";
 import VehicleAvatar from "./VehicleAvatar.jsx";
@@ -122,6 +124,20 @@ export default function Results({
     REVEAL_START + (podiumCount - place) * REVEAL_STEP;
   const detailsDelay = REVEAL_START + podiumCount * REVEAL_STEP + 0.2;
 
+  // Som de cada colocado quando o card dele "pousa" (3º → 2º → 1º).
+  useEffect(() => {
+    const PODIUM_SOUNDS = { 1: "podium1", 2: "podium2", 3: "podium3" };
+    const timeoutIds = [];
+    for (let place = podiumCount; place >= 1; place -= 1) {
+      const delayMs =
+        (REVEAL_START + (podiumCount - place) * REVEAL_STEP + 0.35) * 1000;
+      timeoutIds.push(
+        setTimeout(() => playSound(PODIUM_SOUNDS[place]), delayMs),
+      );
+    }
+    return () => timeoutIds.forEach(clearTimeout);
+  }, [podiumCount]);
+
   // Ordem visual do pódio: 2º, 1º, 3º (só os que existem).
   const podiumOrder = [2, 1, 3].filter((place) => place <= results.length);
 
@@ -147,6 +163,7 @@ export default function Results({
   const [classTopKey] = getTopMissedKeys(classMissedKeys, 1);
 
   const handleStartAnotherRace = () => {
+    playSound("click");
     socket.emit("return_to_lobby", {
       roomCode: room.code,
       targetText: getNextRaceText(room),
@@ -306,6 +323,7 @@ export default function Results({
         theme={theme}
         onToggleTheme={onToggleTheme}
         onLeave={handleLeave}
+        onHome={handleLeave}
         leaveLabel="Sair"
       />
 
@@ -317,6 +335,12 @@ export default function Results({
           <p className="theme-secondary mt-3 text-lg">
             Sala {room.code} • Dificuldade: {difficultyLabel}
           </p>
+          {!results.some((player) => player.id === playerId) && (
+            <p className="mx-auto mt-4 w-fit rounded-full bg-[var(--theme-highlight)] px-4 py-2 text-sm font-bold text-[var(--theme-highlight-text)]">
+              👀 Você entrou durante esta corrida. Agora você é jogador e
+              participa da próxima!
+            </p>
+          )}
         </header>
 
         <section className="mt-8 flex w-full items-end justify-center gap-3 sm:gap-6">

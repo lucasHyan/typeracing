@@ -21,6 +21,7 @@ export default function JoinFromLink({
         theme={theme}
         onToggleTheme={onToggleTheme}
         isConnected={isConnected}
+        onHome={onGoHome}
       />
 
       <section className="flex flex-1 items-center justify-center pb-16">

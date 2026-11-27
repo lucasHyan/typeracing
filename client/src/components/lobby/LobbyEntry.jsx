@@ -10,7 +10,6 @@ export default function LobbyEntry({
   onRoomCodeChange,
   onCreateRoom,
   onJoinRoom,
-  onSoloMode,
   theme = "light",
   onToggleTheme,
 }) {
@@ -89,14 +88,6 @@ export default function LobbyEntry({
             Entrar
           </button>
         </form>
-
-        <button
-          type="button"
-          onClick={onSoloMode}
-          className="theme-secondary mt-10 text-center text-sm font-medium hover:opacity-80 transition"
-        >
-          Treinar no Modo Solo →
-        </button>
       </section>
     </main>
   );

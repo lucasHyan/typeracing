@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { playSound } from "../../services/sound.js";
 import {
   CUSTOM_DIFFICULTY,
   DIFFICULTIES,
@@ -57,6 +58,7 @@ export default function RaceTextPanel({
   const applyText = (rawText) => {
     const nextText = normalizeRaceText(rawText);
     if (nextText.length < MIN_RACE_TEXT_LENGTH) {
+      playSound("error");
       showFeedback(
         `O texto precisa ter pelo menos ${MIN_RACE_TEXT_LENGTH} caracteres.`,
         true,
@@ -64,6 +66,7 @@ export default function RaceTextPanel({
       return false;
     }
     onRoomTextChange?.(nextText);
+    playSound("confirm");
     setIsEditing(false);
     showFeedback(
       rawText.length > MAX_RACE_TEXT_LENGTH
@@ -104,6 +107,7 @@ export default function RaceTextPanel({
   };
 
   const handleDifficultyClick = (option) => {
+    playSound("select");
     setFeedback(null);
     if (option === CUSTOM_DIFFICULTY) {
       pasteFromClipboard();

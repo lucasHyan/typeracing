@@ -1,4 +1,5 @@
 import ThemeToggle from "./ThemeToggle.jsx";
+import SoundToggle from "./SoundToggle.jsx";
 
 function LeaveIcon() {
   return (
@@ -25,10 +26,22 @@ export default function AppHeader({
   onLeave,
   leaveLabel = "Sair da sala",
   isConnected = true,
+  onHome,
 }) {
   return (
     <header className="mx-auto flex h-20 w-full max-w-[1120px] items-center justify-between gap-3">
-      <div className="flex items-center gap-3 text-[26px] font-extrabold tracking-tight sm:text-[28px]">
+      {/* Logo + nome voltam à tela inicial. Sem onHome, é um link comum para "/". */}
+      <a
+        href="/"
+        onClick={(event) => {
+          if (!onHome) return;
+          event.preventDefault();
+          onHome();
+        }}
+        aria-label="TypeRacing: voltar à tela inicial"
+        title="Voltar à tela inicial"
+        className="flex items-center gap-3 rounded-xl text-[26px] font-extrabold tracking-tight no-underline transition hover:opacity-85 sm:text-[28px]"
+      >
         {/* O desenho ocupa ~38% do logo_small.png (o resto é margem transparente);
             o zoom centrado no desenho faz ele preencher a caixa. */}
         <span className="block h-12 w-12 shrink-0 overflow-hidden sm:h-14 sm:w-14">
@@ -43,7 +56,7 @@ export default function AppHeader({
           <span className="brand-type">Type</span>
           <span className="text-[#FF6B2B]">Racing</span>
         </span>
-      </div>
+      </a>
 
       <div className="flex items-center gap-2 sm:gap-3">
         <span className="hidden items-center gap-2 rounded-full bg-[#DDF7E8] px-4 py-2 text-sm font-semibold text-[#14532D] sm:inline-flex dark:bg-[#163026] dark:text-[#86EFAC]">
@@ -52,6 +65,7 @@ export default function AppHeader({
           />
           {isConnected ? "Servidor Online" : "Conectando..."}
         </span>
+        <SoundToggle />
         <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
         {onLeave && (
           <button

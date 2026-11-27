@@ -28,6 +28,8 @@ function SunIcon() {
 }
 
 // Modo claro mostra a Lua (ir para o escuro); modo escuro mostra o Sol (voltar ao claro).
+import { playSound } from "../services/sound.js";
+
 export default function ThemeToggle({ theme, onToggleTheme }) {
   const isDark = theme === "dark";
   const label = isDark ? "Ativar modo claro" : "Ativar modo escuro";
@@ -35,7 +37,10 @@ export default function ThemeToggle({ theme, onToggleTheme }) {
   return (
     <button
       type="button"
-      onClick={onToggleTheme}
+      onClick={() => {
+        playSound("toggle");
+        onToggleTheme?.();
+      }}
       className={`theme-toggle cursor-pointer ${isDark ? "text-[#FFB703]" : "text-[#1E242B]"}`}
       aria-label={label}
       title={label}
